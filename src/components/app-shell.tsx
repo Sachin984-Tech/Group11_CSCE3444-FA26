@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Adaptive Study Path
               </p>
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engine · v0.4
+                Engine · v0.5
               </p>
             </div>
           </button>
@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 + FR-02 + FR-03 + FR-04 · explanations pending FR-05
+            FR-01 + FR-02 + FR-03 + FR-04 + FR-05 · progress chart pending FR-06
           </p>
         </div>
       </footer>

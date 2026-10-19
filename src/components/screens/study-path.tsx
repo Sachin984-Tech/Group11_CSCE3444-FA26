@@ -1,14 +1,25 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, ListTree, PlayCircle, Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import {
+  ArrowRight,
+  ChevronRight,
+  Compass,
+  HelpCircle,
+  Info,
+  ListTree,
+  PlayCircle,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { TOPIC_MAP } from "@/lib/questionBank";
 import { rankTopics } from "@/lib/studyEngine";
 import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
+import type { TopicId } from "@/lib/types";
 
 const accentRing: Record<string, string> = {
   emerald: "ring-emerald-400/40",
@@ -46,6 +57,11 @@ export function StudyPathScreen() {
     () => rankTopics(masteryByTopic, quizTopicIds),
     [masteryByTopic, quizTopicIds],
   );
+
+  const [whyOpen, setWhyOpen] = useState<TopicId | null>(null);
+
+  const whyTopic = whyOpen ? TOPIC_MAP[whyOpen] : null;
+  const whyEntry = whyOpen ? ranked.find((r) => r.topic.id === whyOpen) : null;
 
   if (!quizComplete) {
     return (
@@ -265,6 +281,15 @@ export function StudyPathScreen() {
                             <PlayCircle className="h-3.5 w-3.5 mr-1" />
                             <span className="hidden sm:inline">Practice</span>
                           </Button>
+                          <Button
+                            onClick={() => setWhyOpen(topic.id)}
+                            size="sm"
+                            variant="outline"
+                            className="glass border-border/50"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5 mr-1" />
+                            <span className="hidden sm:inline">Why?</span>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -280,11 +305,103 @@ export function StudyPathScreen() {
           <p className="text-xs text-muted-foreground">
             Answer practice questions and watch the path rerank in real time.
             Mastery recalculates from your last 10 attempts per topic.
-            <strong className="text-foreground"> FR-05 (Why? Explanations)</strong>{" "}
+            <strong className="text-foreground"> FR-06 (Topic Progress Chart)</strong>{" "}
             lands in the next commit.
           </p>
         </div>
       </div>
+
+      <AnimatePresence>
+        {whyOpen && whyTopic && whyEntry ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+            onClick={() => setWhyOpen(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, rotateX: -10, y: 20 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ type: "spring", stiffness: 220, damping: 22 }}
+              style={{ transformStyle: "preserve-3d" }}
+              className="glass-strong rounded-2xl p-6 max-w-lg w-full border border-border/40 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setWhyOpen(null)}
+                className="absolute top-3 right-3 h-8 w-8 rounded-lg hover:bg-muted/40 flex items-center justify-center"
+                aria-label="Close explanation"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="flex items-start gap-3">
+                <div
+                  className={`h-11 w-11 rounded-xl bg-gradient-to-br ${accentBg[whyTopic.accent]} ring-1 ${accentRing[whyTopic.accent]} flex items-center justify-center font-mono text-xl ${accentText[whyTopic.accent]}`}
+                >
+                  {whyTopic.icon}
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Why is {whyTopic.name} ranked #{whyEntry.rank}?
+                  </p>
+                  <h3 className="text-lg font-semibold">{whyTopic.name}</h3>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 rounded-xl bg-muted/30 border border-border/30">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {whyEntry.reason}
+                </p>
+              </div>
+
+              {whyEntry.mastery ? (
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <p className="text-lg font-mono font-bold">{whyEntry.mastery.score}%</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Mastery</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <p className="text-lg font-mono font-bold">{whyEntry.mastery.correctCount}/{whyEntry.mastery.attemptCount}</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Recent</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <p className="text-lg font-mono font-bold">{whyTopic.prerequisites.length}</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Prereqs</p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex items-center gap-2">
+                <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Explanations update every time your mastery recalculates -
+                  usually right after you answer a practice question.
+                </p>
+              </div>
+
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setWhyOpen(null)}>
+                  Got it
+                </Button>
+                <Button
+                  onClick={() => {
+                    const id = whyTopic.id;
+                    setWhyOpen(null);
+                    startPractice(id);
+                  }}
+                  size="sm"
+                  className="bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 text-white border-0"
+                >
+                  Practice this
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

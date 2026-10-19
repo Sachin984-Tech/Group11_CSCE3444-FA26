@@ -80,8 +80,42 @@ export function rankTopics(
     topic: entry.topic,
     rank: idx + 1,
     mastery: entry.mastery,
-    reason: "",
+    reason: buildReason(entry.topic, entry.mastery, masteryByTopic),
   }));
+}
+
+function buildReason(
+  topic: Topic,
+  mastery: MasteryScore | null,
+  masteryByTopic: Map<TopicId, MasteryScore>,
+): string {
+  if (!mastery) {
+    return `No diagnostic data yet for ${topic.name}. Take the quiz to unlock a personalized rank.`;
+  }
+  const score = mastery.score;
+  const correct = mastery.correctCount;
+  const total = mastery.attemptCount;
+
+  if (score >= 80) {
+    return `${topic.name} ranked low-priority because you answered ${correct} of ${total} correctly (${score}%) - that's Mastered. Marked as Optional Review, but feel free to revisit when you have spare time.`;
+  }
+
+  const weakPrereqs = topic.prerequisites
+    .map((id) => ({ id, m: masteryByTopic.get(id) }))
+    .filter((x) => x.m && x.m!.score < 50)
+    .map((x) => TOPIC_MAP[x.id].name);
+
+  let base = `${topic.name} sits at rank here because you answered ${correct} of ${total} correctly (${score}%), classifying as ${labelFor(mastery.classification)}.`;
+  if (weakPrereqs.length > 0) {
+    base += ` It also depends on ${weakPrereqs.join(", ")} - those scored below 50%, so they're scheduled ahead of ${topic.name} to keep you from building on shaky foundations.`;
+  }
+  return base;
+}
+
+function labelFor(cls: MasteryClass): string {
+  if (cls === "mastered") return "Mastered";
+  if (cls === "developing") return "Developing";
+  return "Needs Work";
 }
 
 export function recomputeMasteryWithAttempts(
