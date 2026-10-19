@@ -9,6 +9,7 @@ import { DashboardScreen } from "@/components/screens/dashboard";
 import { QuizScreen } from "@/components/screens/quiz";
 import { StudyPathScreen } from "@/components/screens/study-path";
 import { PracticeScreen } from "@/components/screens/practice";
+import { ProgressScreen } from "@/components/screens/progress";
 
 const subscribeNoop = () => () => {};
 const clientSnapshot = () => true;
@@ -46,6 +47,7 @@ export default function Home() {
         {screen === "quiz" ? <QuizScreen key="quiz" /> : null}
         {screen === "study-path" ? <StudyPathScreen key="study-path" /> : null}
         {screen === "practice" ? <PracticeScreen key="practice" /> : null}
+        {screen === "progress" ? <ProgressScreen key="progress" /> : null}
       </AnimatePresence>
     </AppShell>
   );

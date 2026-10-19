@@ -116,7 +116,7 @@ export const useAppStore = create<AppState>()(
       exitPractice: () => set({ practiceTopicId: null, screen: "study-path" }),
     }),
     {
-      name: "aspe-store-v4",
+      name: "aspe-store-v5",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {

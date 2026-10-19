@@ -137,3 +137,12 @@ export function recomputeMasteryWithAttempts(
     classification: classify(score),
   };
 }
+
+export function summaryStats(masteryByTopic: Map<TopicId, MasteryScore>) {
+  const all = Array.from(masteryByTopic.values());
+  const mastered = all.filter((m) => m.classification === "mastered").length;
+  const developing = all.filter((m) => m.classification === "developing").length;
+  const needsWork = all.filter((m) => m.classification === "needs-work").length;
+  const average = all.length === 0 ? 0 : Math.round(all.reduce((s, m) => s + m.score, 0) / all.length);
+  return { mastered, developing, needsWork, total: all.length, average };
+}

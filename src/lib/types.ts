@@ -67,7 +67,7 @@ export interface PracticeAttempt {
   timestamp: number;
 }
 
-export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice";
+export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress";
 
 export interface User {
   email: string;

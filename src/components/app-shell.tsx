@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, Compass, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { BarChart3, Brain, Compass, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import type { Screen } from "@/lib/types";
@@ -11,6 +11,7 @@ const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
   { id: "quiz", label: "Diagnostic", icon: Compass },
   { id: "study-path", label: "Study Path", icon: RouteIcon },
   { id: "practice", label: "Practice", icon: PlayCircle },
+  { id: "progress", label: "Progress", icon: BarChart3 },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -42,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Adaptive Study Path
               </p>
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engine · v0.5
+                Engine · v1.0
               </p>
             </div>
           </button>
@@ -145,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 + FR-02 + FR-03 + FR-04 + FR-05 · progress chart pending FR-06
+            FR-01 through FR-06 complete - Release 1.0
           </p>
         </div>
       </footer>
