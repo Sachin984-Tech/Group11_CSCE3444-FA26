@@ -1,43 +1,40 @@
-# Adaptive Study Path Engine
+# Adaptive Study Path Engine - FR-01
 
-## Overview
-Adaptive Study Path Engine is a tool designed to help undergraduate computer 
-science students study more efficiently. Instead of reviewing the same 
-material as everyone else, students get a diagnostic quiz that identifies 
-what they already know and what they need to work on, and the system builds 
-a personalized study path based on the results.
+**Commit 1 of 6 - User Registration & Login (FR-01)**
 
-## Problem
-Many first and second year CS students struggle to figure out what to review 
-before moving on to new material. They often end up studying topics they 
-already understand while missing gaps in their knowledge, which becomes a 
-bigger problem later when they need to build on concepts they never fully 
-learned.
+This commit implements the first functional requirement: account access. Users can register with email + password (8-char min, password confirmation), or sign in to an existing account. State persists to `localStorage` via Zustand. Firebase Auth integration is pending Sprint 5.
 
-## Target Users
-Undergraduate computer science students taking courses like data structures 
-and algorithms who want to make better use of their study time.
+## What's in this commit
 
-## Features
-- A short diagnostic quiz to assess current knowledge
-- A personalized study path generated from quiz results, prioritizing weak 
-  topics first
-- The study path updates automatically as the student answers more questions
-- A simple progress chart showing topics learned vs. topics still needed
-- An explanation for why each topic was recommended, so students understand 
-  the reasoning instead of just following instructions
+- Landing page with split-screen hero + glassmorphic auth card
+- Login / Register tab switch with animated pill indicator
+- Validation: email format, 8-char password, password match, display name required
+- 3D tilt cards with glare on the feature highlights
+- Aurora background with animated radial-gradient orbs
+- Dashboard with welcome message + FR-01 through FR-06 status pills (only FR-01 is "live")
+- App shell with sticky glass nav, user avatar, sign-out button
+- Hydration-safe Zustand store (`skipHydration: true` + manual `rehydrate()`)
+- Loading spinner during hydration to prevent blank-page hydration mismatch
 
-## Example User Story
-A first year CS student opens the app to prepare for a data structures exam. 
-They take a quick diagnostic quiz on arrays, linked lists, and trees. The 
-results show they're strong in arrays but weak in trees, so the system 
-builds a study path starting with tree practice questions. As they answer 
-more questions, the path keeps adjusting to focus on whatever topics they're 
-still weak in, so they only spend time reviewing what they don't already know.
+## What's NOT in this commit (intentional)
 
-## Team
-- **Group 11**
-- Sachin — Team Lead / Developer
+- FR-02 Diagnostic Quiz
+- FR-03 Personalized Study Path
+- FR-04 Practice + Recalculation
+- FR-05 Recommendation Explanations
+- FR-06 Topic Progress Chart
 
-## Project Status
-In Progress   
+These land in subsequent commits.
+
+## Run
+
+```bash
+bun install   # or npm install
+bun run dev   # or npm run dev
+```
+
+Open http://localhost:3000 - click "Fill demo credentials" - click "Create account".
+
+## Tech
+
+Next.js 16 / React 19 / TypeScript 5 / Tailwind CSS 4 / Zustand (persist) / framer-motion / lucide-react / Inter + JetBrains Mono.
