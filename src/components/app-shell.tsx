@@ -1,9 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, Home, LogOut } from "lucide-react";
+import { Brain, Compass, Home, LogOut } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import type { Screen } from "@/lib/types";
+
+const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
+  { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "quiz", label: "Diagnostic", icon: Compass },
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const user = useAppStore((s) => s.user);
@@ -34,32 +40,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Adaptive Study Path
               </p>
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engine · v0.1
+                Engine · v0.2
               </p>
             </div>
           </button>
 
-          <nav className="flex items-center gap-1">
-            <button
-              onClick={() => go("dashboard")}
-              className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-                screen === "dashboard"
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span className="relative z-10 flex items-center gap-1.5">
-                <Home className="h-3.5 w-3.5" />
-                Dashboard
-              </span>
-              {screen === "dashboard" ? (
-                <motion.span
-                  layoutId="nav-active"
-                  className="absolute inset-0 rounded-lg bg-gradient-to-r from-fuchsia-500/20 via-violet-500/15 to-emerald-400/20 border border-fuchsia-400/30"
-                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                />
-              ) : null}
-            </button>
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV.map((item) => {
+              const Icon = item.icon;
+              const active = screen === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => go(item.id)}
+                  className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </span>
+                  {active ? (
+                    <motion.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-fuchsia-500/20 via-violet-500/15 to-emerald-400/20 border border-fuchsia-400/30"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -87,6 +100,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </div>
+
+        <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto scrollbar-thin">
+          {NAV.map((item) => {
+            const Icon = item.icon;
+            const active = screen === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => go(item.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
+                  active
+                    ? "bg-fuchsia-500/15 text-fuchsia-200 border border-fuchsia-400/30"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       <main className="flex-1 flex flex-col">
@@ -109,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 Login &amp; Account Access · more features pending
+            FR-01 + FR-02 · study path pending FR-03
           </p>
         </div>
       </footer>

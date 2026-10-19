@@ -6,6 +6,7 @@ import { useAppStore } from "@/lib/store";
 import { AppShell } from "@/components/app-shell";
 import { LandingScreen } from "@/components/screens/landing";
 import { DashboardScreen } from "@/components/screens/dashboard";
+import { QuizScreen } from "@/components/screens/quiz";
 
 const subscribeNoop = () => () => {};
 const clientSnapshot = () => true;
@@ -40,6 +41,7 @@ export default function Home() {
     <AppShell>
       <AnimatePresence mode="wait">
         {screen === "dashboard" ? <DashboardScreen key="dashboard" /> : null}
+        {screen === "quiz" ? <QuizScreen key="quiz" /> : null}
       </AnimatePresence>
     </AppShell>
   );
