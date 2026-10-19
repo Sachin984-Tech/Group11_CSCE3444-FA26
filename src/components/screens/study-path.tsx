@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, ListTree } from "lucide-react";
+import { Compass, ListTree, PlayCircle, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useAppStore } from "@/lib/store";
 import { TOPIC_MAP } from "@/lib/questionBank";
@@ -39,6 +39,7 @@ export function StudyPathScreen() {
   const quizComplete = useAppStore((s) => s.quizComplete);
   const masteryByTopic = useAppStore((s) => s.masteryByTopic);
   const go = useAppStore((s) => s.go);
+  const startPractice = useAppStore((s) => s.startPractice);
   const quizTopicIds = useAppStore((s) => s.quizTopicIds);
 
   const ranked = useMemo(
@@ -84,19 +85,33 @@ export function StudyPathScreen() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
         >
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
-            <ListTree className="h-3.5 w-3.5" />
-            Personalized - recalculates live
-          </p>
-          <h1 className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight">
-            Your study path
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-            Ranked weakest-first. Topics with weak prerequisites are pulled
-            ahead of their dependents. Mastered topics are grouped at the end
-            as <em>Optional Review</em>.
-          </p>
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
+              <ListTree className="h-3.5 w-3.5" />
+              Personalized - recalculates live
+            </p>
+            <h1 className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight">
+              Your study path
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+              Ranked weakest-first. Topics with weak prerequisites are pulled
+              ahead of their dependents. Mastered topics are grouped at the end
+              as <em>Optional Review</em>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => go("practice")}
+              variant="outline"
+              size="sm"
+              className="glass border-border/50"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Practice weakest
+            </Button>
+          </div>
         </motion.div>
 
         <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
@@ -240,6 +255,17 @@ export function StudyPathScreen() {
                             </div>
                           ) : null}
                         </div>
+
+                        <div className="flex sm:flex-col gap-2 shrink-0">
+                          <Button
+                            onClick={() => startPractice(topic.id)}
+                            size="sm"
+                            className={`bg-gradient-to-r ${accentBg[topic.accent]} ring-1 ${accentRing[topic.accent]} border-0 ${accentText[topic.accent]} hover:opacity-90`}
+                          >
+                            <PlayCircle className="h-3.5 w-3.5 mr-1" />
+                            <span className="hidden sm:inline">Practice</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </TiltCard>
@@ -250,11 +276,12 @@ export function StudyPathScreen() {
         </div>
 
         <div className="mt-6 p-4 rounded-2xl glass border border-border/30 flex items-start gap-3">
+          <Sparkles className="h-4 w-4 text-fuchsia-300 shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
-            <strong className="text-foreground">FR-04 (Practice + Recalculation)</strong>{" "}
-            and <strong className="text-foreground">FR-05 (Why? Explanations)</strong>{" "}
-            land in the next commits. For now, your study path is ranked and
-            ready.
+            Answer practice questions and watch the path rerank in real time.
+            Mastery recalculates from your last 10 attempts per topic.
+            <strong className="text-foreground"> FR-05 (Why? Explanations)</strong>{" "}
+            lands in the next commit.
           </p>
         </div>
       </div>

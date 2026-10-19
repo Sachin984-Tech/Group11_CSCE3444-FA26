@@ -228,7 +228,7 @@ export function DashboardScreen() {
             { label: "FR-01", text: "Login & Access", done: true },
             { label: "FR-02", text: "Diagnostic Quiz", done: true },
             { label: "FR-03", text: "Study Path", done: true },
-            { label: "FR-04", text: "Practice + Recalc", done: false },
+            { label: "FR-04", text: "Practice + Recalc", done: true },
             { label: "FR-05", text: "Why? Explanations", done: false },
             { label: "FR-06", text: "Progress Chart", done: false },
           ].map((fr) => (

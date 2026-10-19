@@ -60,7 +60,14 @@ export interface RankedTopic {
   reason: string;
 }
 
-export type Screen = "landing" | "dashboard" | "quiz" | "study-path";
+export interface PracticeAttempt {
+  questionId: string;
+  topicId: TopicId;
+  correct: boolean;
+  timestamp: number;
+}
+
+export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice";
 
 export interface User {
   email: string;

@@ -1,27 +1,27 @@
-# Adaptive Study Path Engine - FR-03
+# Adaptive Study Path Engine - FR-04
 
-**Commit 3 of 6 - Personalized Study Path (FR-03)**
+**Commit 4 of 6 - Practice + Dynamic Recalculation (FR-04)**
 
-Builds on FR-01 + FR-02. Adds the personalized study path: per-topic Mastery Scores classified into Needs Work / Developing / Mastered, ranked weakest-first, with weak prerequisites pulled ahead of dependents, and mastered topics demoted to "Optional Review" at the tail.
+Builds on FR-01 + FR-02 + FR-03. Adds practice questions for any topic with live mastery recalculation after every answer. The study path reranks in real time as mastery scores change.
 
 ## What's new in this commit
 
-- `masteryByTopic: Map<TopicId, MasteryScore>` persisted in the store
-- `rankTopics()` algorithm in studyEngine:
-  - Sorts topics by Mastery Score ascending (weakest first)
-  - Default course order as tiebreaker (Arrays -> Linked Lists -> Stacks & Queues -> Trees -> Graphs -> Sorting & Searching)
-  - Weak prerequisite promotion: if a topic is weak AND its prerequisite is weak AND the prerequisite ranks after it, the prerequisite moves ahead
-  - Mastered topics grouped at the tail as "Optional Review"
-- Study Path screen with 3D-tilted ranked cards, mastery bars, classification badges, and prerequisite chips
-- Dashboard shows top-3 weakest topics preview
-- Quiz submit now navigates to study-path screen
-- App shell nav includes "Study Path"
-- 3-band summary tiles (Needs Work / Developing / Mastered counts)
+- `attempts: PracticeAttempt[]`, `practiceTopicId`, `practicedQuestionIds[]` in store
+- `recomputeMasteryWithAttempts()` in studyEngine - recomputes mastery from the last 10 attempts for a topic
+- `startPractice(topicId)`, `recordAttempt(attempt)`, `exitPractice()` actions
+- Practice screen with two modes:
+  - Topic picker (shows all available topics with current mastery)
+  - Question flow with 4-option MCQ, animated feedback panel, correct/wrong highlighting, explanation from the question bank, streak counter (3+ correct = flame indicator)
+- Practice questions not re-served until the topic pool is exhausted
+- Mastery recalculates after every answer and propagates back to `masteryByTopic`
+- Study path automatically reranks when mastery changes (via `useMemo` dependency on `masteryByTopic`)
+- Study Path screen now has a "Practice" button on each topic row and a "Practice weakest" button in the header
+- App shell nav includes "Practice"
+- Live metric tiles: Streak / Mastery / Recent (correct/attempted from last 10)
 
 ## What's NOT in this commit (intentional)
 
-- FR-04 Practice + Recalculation (next commit - practice questions + live mastery recalculation)
-- FR-05 Recommendation Explanations
+- FR-05 Recommendation Explanations (the "Why?" modal lands next)
 - FR-06 Topic Progress Chart
 
 ## Run
@@ -31,7 +31,7 @@ bun install   # or npm install
 bun run dev   # or npm run dev
 ```
 
-Open http://localhost:3000 -> register -> dashboard -> "Take diagnostic quiz" -> answer questions -> submit -> study path appears ranked.
+Open http://localhost:3000 -> register -> take diagnostic quiz -> on study path, click "Practice" on a topic -> answer questions -> watch the path rerank live.
 
 ## Tech
 

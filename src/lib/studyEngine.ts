@@ -1,5 +1,5 @@
 import { TOPIC_MAP, QUESTIONS } from "./questionBank";
-import type { MasteryClass, MasteryScore, QuizAnswer, QuizResult, RankedTopic, Topic, TopicId } from "./types";
+import type { MasteryClass, MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, RankedTopic, Topic, TopicId } from "./types";
 
 export function classify(score: number): MasteryClass {
   if (score >= 80) return "mastered";
@@ -82,4 +82,24 @@ export function rankTopics(
     mastery: entry.mastery,
     reason: "",
   }));
+}
+
+export function recomputeMasteryWithAttempts(
+  topicId: TopicId,
+  attempts: PracticeAttempt[],
+  windowSize = 10,
+): MasteryScore {
+  const recent = attempts
+    .filter((a) => a.topicId === topicId)
+    .slice(-windowSize);
+  const total = recent.length;
+  const correct = recent.filter((a) => a.correct).length;
+  const score = total === 0 ? 0 : Math.round((correct / total) * 100);
+  return {
+    topicId,
+    score,
+    correctCount: correct,
+    attemptCount: total,
+    classification: classify(score),
+  };
 }

@@ -3,8 +3,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { TOPICS } from "./questionBank";
-import { classify, masteryFromQuiz, scoreQuiz } from "./studyEngine";
-import type { MasteryScore, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
+import { classify, masteryFromQuiz, recomputeMasteryWithAttempts, scoreQuiz } from "./studyEngine";
+import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
 
 interface AppState {
   user: User | null;
@@ -14,6 +14,9 @@ interface AppState {
   quizComplete: boolean;
   quizResults: QuizResult[];
   masteryByTopic: Map<TopicId, MasteryScore>;
+  attempts: PracticeAttempt[];
+  practiceTopicId: TopicId | null;
+  practicedQuestionIds: string[];
 
   login: (email: string, displayName: string) => void;
   logout: () => void;
@@ -22,6 +25,9 @@ interface AppState {
   recordQuizAnswer: (q: QuizAnswer) => void;
   submitQuiz: () => void;
   resetQuiz: () => void;
+  startPractice: (topicId: TopicId) => void;
+  recordAttempt: (attempt: PracticeAttempt) => void;
+  exitPractice: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -34,6 +40,9 @@ export const useAppStore = create<AppState>()(
       quizComplete: false,
       quizResults: [],
       masteryByTopic: new Map<TopicId, MasteryScore>(),
+      attempts: [],
+      practiceTopicId: null,
+      practicedQuestionIds: [],
 
       login: (email, displayName) =>
         set({ user: { email, displayName, createdAt: Date.now() }, screen: "dashboard" }),
@@ -46,6 +55,9 @@ export const useAppStore = create<AppState>()(
           quizComplete: false,
           quizResults: [],
           masteryByTopic: new Map<TopicId, MasteryScore>(),
+          attempts: [],
+          practiceTopicId: null,
+          practicedQuestionIds: [],
         }),
 
       go: (screen) => set({ screen }),
@@ -84,9 +96,27 @@ export const useAppStore = create<AppState>()(
           masteryByTopic: new Map<TopicId, MasteryScore>(),
           quizTopicIds: TOPICS.map((t) => t.id),
         }),
+
+      startPractice: (topicId) =>
+        set({ practiceTopicId: topicId, screen: "practice" }),
+
+      recordAttempt: (attempt) =>
+        set((s) => {
+          const nextAttempts = [...s.attempts, attempt];
+          const nextMastery = new Map<TopicId, MasteryScore>(s.masteryByTopic);
+          const updated = recomputeMasteryWithAttempts(attempt.topicId, nextAttempts);
+          nextMastery.set(attempt.topicId, updated);
+          return {
+            attempts: nextAttempts,
+            masteryByTopic: nextMastery,
+            practicedQuestionIds: [...s.practicedQuestionIds, attempt.questionId],
+          };
+        }),
+
+      exitPractice: () => set({ practiceTopicId: null, screen: "study-path" }),
     }),
     {
-      name: "aspe-store-v3",
+      name: "aspe-store-v4",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {
@@ -104,6 +134,8 @@ export const useAppStore = create<AppState>()(
         quizComplete: s.quizComplete,
         quizResults: s.quizResults,
         masteryByTopic: Array.from(s.masteryByTopic.entries()),
+        attempts: s.attempts,
+        practicedQuestionIds: s.practicedQuestionIds,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<AppState> & {
