@@ -3,8 +3,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { TOPICS } from "./questionBank";
-import { classify, scoreQuiz } from "./studyEngine";
-import type { QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
+import { classify, masteryFromQuiz, scoreQuiz } from "./studyEngine";
+import type { MasteryScore, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
 
 interface AppState {
   user: User | null;
@@ -13,6 +13,7 @@ interface AppState {
   quizAnswers: QuizAnswer[];
   quizComplete: boolean;
   quizResults: QuizResult[];
+  masteryByTopic: Map<TopicId, MasteryScore>;
 
   login: (email: string, displayName: string) => void;
   logout: () => void;
@@ -32,6 +33,7 @@ export const useAppStore = create<AppState>()(
       quizAnswers: [],
       quizComplete: false,
       quizResults: [],
+      masteryByTopic: new Map<TopicId, MasteryScore>(),
 
       login: (email, displayName) =>
         set({ user: { email, displayName, createdAt: Date.now() }, screen: "dashboard" }),
@@ -43,6 +45,7 @@ export const useAppStore = create<AppState>()(
           quizAnswers: [],
           quizComplete: false,
           quizResults: [],
+          masteryByTopic: new Map<TopicId, MasteryScore>(),
         }),
 
       go: (screen) => set({ screen }),
@@ -61,7 +64,15 @@ export const useAppStore = create<AppState>()(
       submitQuiz: () => {
         set((s) => {
           const results = scoreQuiz(s.quizAnswers);
-          return { quizResults: results, quizComplete: true, screen: "dashboard" };
+          const mastery = masteryFromQuiz(results);
+          const nextMastery = new Map<TopicId, MasteryScore>(s.masteryByTopic);
+          for (const m of mastery) nextMastery.set(m.topicId, m);
+          return {
+            quizResults: results,
+            quizComplete: true,
+            masteryByTopic: nextMastery,
+            screen: "study-path" as Screen,
+          };
         });
       },
 
@@ -70,11 +81,12 @@ export const useAppStore = create<AppState>()(
           quizAnswers: [],
           quizComplete: false,
           quizResults: [],
+          masteryByTopic: new Map<TopicId, MasteryScore>(),
           quizTopicIds: TOPICS.map((t) => t.id),
         }),
     }),
     {
-      name: "aspe-store-v2",
+      name: "aspe-store-v3",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {
@@ -91,12 +103,18 @@ export const useAppStore = create<AppState>()(
         quizAnswers: s.quizAnswers,
         quizComplete: s.quizComplete,
         quizResults: s.quizResults,
+        masteryByTopic: Array.from(s.masteryByTopic.entries()),
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<AppState>;
+        const p = (persisted ?? {}) as Partial<AppState> & {
+          masteryByTopic?: [TopicId, MasteryScore][];
+        };
         return {
           ...current,
           ...p,
+          masteryByTopic: p.masteryByTopic
+            ? new Map<TopicId, MasteryScore>(p.masteryByTopic)
+            : current.masteryByTopic,
           screen: "landing",
         } as AppState;
       },

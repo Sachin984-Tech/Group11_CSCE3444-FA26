@@ -31,7 +31,6 @@ export function QuizScreen() {
   const submitQuiz = useAppStore((s) => s.submitQuiz);
   const resetQuiz = useAppStore((s) => s.resetQuiz);
   const quizComplete = useAppStore((s) => s.quizComplete);
-  const go = useAppStore((s) => s.go);
 
   const [phase, setPhase] = useState<Phase>("configure");
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -76,7 +75,6 @@ export function QuizScreen() {
     setPhase("submitting");
     setTimeout(() => {
       submitQuiz();
-      go("dashboard");
     }, 1100);
   }
 

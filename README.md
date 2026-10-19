@@ -1,25 +1,26 @@
-# Adaptive Study Path Engine - FR-02
+# Adaptive Study Path Engine - FR-03
 
-**Commit 2 of 6 - Diagnostic Quiz (FR-02)**
+**Commit 3 of 6 - Personalized Study Path (FR-03)**
 
-Builds on FR-01 (login + register). Adds the diagnostic quiz across six DSA topics - three questions per topic, eighteen total - with per-topic scoring saved to the store.
+Builds on FR-01 + FR-02. Adds the personalized study path: per-topic Mastery Scores classified into Needs Work / Developing / Mastered, ranked weakest-first, with weak prerequisites pulled ahead of dependents, and mastered topics demoted to "Optional Review" at the tail.
 
 ## What's new in this commit
 
-- Six DSA topics defined: Arrays, Linked Lists, Stacks & Queues, Trees, Graphs, Sorting & Searching
-- 23 multiple-choice questions with explanations in the question bank
-- Topic selection grid (all six pre-selected, can deselect any)
-- One-question-at-a-time flow with question jump chips and progress bar
-- Back / Next navigation, can change answers before submit
-- Submit confirmation modal with answered count
-- Animated scoring loader (scoring -> classifying -> saving results)
-- Per-topic results saved as `QuizResult[]` in the store
-- Dashboard updated to show per-topic scores with mastery bands (Needs Work / Developing / Mastered) and animated bars
+- `masteryByTopic: Map<TopicId, MasteryScore>` persisted in the store
+- `rankTopics()` algorithm in studyEngine:
+  - Sorts topics by Mastery Score ascending (weakest first)
+  - Default course order as tiebreaker (Arrays -> Linked Lists -> Stacks & Queues -> Trees -> Graphs -> Sorting & Searching)
+  - Weak prerequisite promotion: if a topic is weak AND its prerequisite is weak AND the prerequisite ranks after it, the prerequisite moves ahead
+  - Mastered topics grouped at the tail as "Optional Review"
+- Study Path screen with 3D-tilted ranked cards, mastery bars, classification badges, and prerequisite chips
+- Dashboard shows top-3 weakest topics preview
+- Quiz submit now navigates to study-path screen
+- App shell nav includes "Study Path"
+- 3-band summary tiles (Needs Work / Developing / Mastered counts)
 
 ## What's NOT in this commit (intentional)
 
-- FR-03 Personalized Study Path (next commit - ranking logic with prerequisites)
-- FR-04 Practice + Recalculation
+- FR-04 Practice + Recalculation (next commit - practice questions + live mastery recalculation)
 - FR-05 Recommendation Explanations
 - FR-06 Topic Progress Chart
 
@@ -30,7 +31,7 @@ bun install   # or npm install
 bun run dev   # or npm run dev
 ```
 
-Open http://localhost:3000 -> register -> dashboard -> "Take diagnostic quiz" -> answer questions -> submit -> see scores on dashboard.
+Open http://localhost:3000 -> register -> dashboard -> "Take diagnostic quiz" -> answer questions -> submit -> study path appears ranked.
 
 ## Tech
 

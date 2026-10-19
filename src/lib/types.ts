@@ -45,7 +45,22 @@ export interface QuizResult {
 
 export type MasteryClass = "needs-work" | "developing" | "mastered";
 
-export type Screen = "landing" | "dashboard" | "quiz";
+export interface MasteryScore {
+  topicId: TopicId;
+  score: number;
+  correctCount: number;
+  attemptCount: number;
+  classification: MasteryClass;
+}
+
+export interface RankedTopic {
+  topic: Topic;
+  rank: number;
+  mastery: MasteryScore | null;
+  reason: string;
+}
+
+export type Screen = "landing" | "dashboard" | "quiz" | "study-path";
 
 export interface User {
   email: string;
