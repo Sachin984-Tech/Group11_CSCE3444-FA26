@@ -13,11 +13,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useAppStore, allQuestions } from "@/lib/store";
-import { TOPIC_MAP } from "@/lib/questionBank";
+import { useAppStore } from "@/lib/store";
+import { TOPIC_MAP, QUESTIONS } from "@/lib/questionBank";
 import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { AuroraBg } from "@/components/aurora-bg";
 import type { PracticeAttempt } from "@/lib/types";
 
@@ -64,22 +63,8 @@ export function PracticeScreen() {
   const startPractice = useAppStore((s) => s.startPractice);
   const go = useAppStore((s) => s.go);
   const quizTopicIds = useAppStore((s) => s.quizTopicIds);
-  const ranked = useMemo(
-    () =>
-      quizTopicIds
-        .map((id) => TOPIC_MAP[id])
-        .map((topic) => ({ topic, mastery: masteryByTopic.get(topic.id) ?? null }))
-        .sort((a, b) => {
-          const sa = a.mastery?.score ?? 0;
-          const sb = b.mastery?.score ?? 0;
-          if (sa !== sb) return sa - sb;
-          return a.topic.defaultOrder - b.topic.defaultOrder;
-        })
-        .map((entry, idx) => ({ ...entry, rank: idx + 1 })),
-    [quizTopicIds, masteryByTopic],
-  );
 
-  const questionBank = useMemo(() => allQuestions(), []);
+  const questionBank = useMemo(() => QUESTIONS, []);
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
@@ -88,15 +73,13 @@ export function PracticeScreen() {
   useEffect(() => {
     if (!practiceTopicId) return;
     const topicQs = questionBank.filter((q) => q.topicId === practiceTopicId);
-    const untried = topicQs.filter((q) => !practicedQuestionIds.includes(q.id));
-    const pool = untried.length > 0 ? untried : topicQs;
-    const pick = pool[Math.floor(Math.random() * pool.length)] ?? topicQs[0];
+    const pick = topicQs[Math.floor(Math.random() * topicQs.length)] ?? topicQs[0];
     if (pick) {
       setCurrentQuestionId(pick.id);
       setSelected(null);
       setFeedback(null);
     }
-  }, [practiceTopicId, questionBank, practicedQuestionIds]);
+  }, [practiceTopicId, questionBank]);
 
   if (!practiceTopicId) {
     return (
@@ -116,18 +99,17 @@ export function PracticeScreen() {
             your study path reranks in real time.
           </p>
           <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {ranked.map((entry, i) => {
-              const topic = entry.topic;
-              const m = masteryByTopic.get(topic.id);
+            {quizTopicIds.map((id) => {
+              const topic = TOPIC_MAP[id];
+              const m = masteryByTopic.get(id);
               return (
                 <motion.button
-                  key={topic.id}
+                  key={id}
                   initial={{ opacity: 0, y: 18, rotateX: -8 }}
                   animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  transition={{ delay: i * 0.05 }}
                   whileHover={{ y: -4, rotateY: 6 }}
                   style={{ transformStyle: "preserve-3d" }}
-                  onClick={() => startPractice(topic.id)}
+                  onClick={() => startPractice(id)}
                 >
                   <TiltCard
                     intensity={10}
@@ -166,7 +148,7 @@ export function PracticeScreen() {
     return (
       <div className="px-4 sm:px-6 py-16 text-center">
         <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">Loading question…</p>
+        <p className="mt-3 text-sm text-muted-foreground">Loading question...</p>
       </div>
     );
   }
@@ -189,7 +171,7 @@ export function PracticeScreen() {
       questionId: currentQuestion.id,
     });
     setStreak((s) => (correct ? s + 1 : 0));
-    recordAttempt(attempt, correct);
+    recordAttempt(attempt);
   }
 
   function nextQuestion() {
@@ -225,9 +207,9 @@ export function PracticeScreen() {
               <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${accentBg[topic.accent]}`} />
               {topic.name}
             </span>
-            <span className="text-muted-foreground/50"> - </span>
+            <span className="text-muted-foreground/50">·</span>
             <span className="font-mono">
-              Mastery {mastery ? `${mastery.score}%` : " - "}
+              Mastery {mastery ? `${mastery.score}%` : "—"}
             </span>
           </div>
         </div>
@@ -241,7 +223,7 @@ export function PracticeScreen() {
           />
           <Metric
             label="Mastery"
-            value={mastery ? `${mastery.score}%` : " - "}
+            value={mastery ? `${mastery.score}%` : "—"}
             icon={Target}
             tone={mastery ? (mastery.score >= 80 ? "text-emerald-300" : mastery.score >= 50 ? "text-amber-300" : "text-rose-300") : "text-muted-foreground"}
           />
@@ -274,8 +256,8 @@ export function PracticeScreen() {
                   <span className={`text-xl font-mono ${accentText[topic.accent]}`}>
                     {topic.icon}
                   </span>
-                  <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    {topic.name} - practice
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {topic.name} · practice
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-semibold leading-snug">
@@ -401,8 +383,6 @@ export function PracticeScreen() {
             <ChevronRight className="h-3 w-3" />
           </button>
         </div>
-
-        <Progress value={mastery ? mastery.score : 0} className="sr-only" />
       </div>
     </div>
   );
@@ -423,7 +403,7 @@ function Metric({
     <div className="rounded-xl p-3 glass border border-border/30 text-center">
       <Icon className={`h-3.5 w-3.5 mx-auto ${tone}`} />
       <p className={`mt-1 text-lg font-mono font-bold ${tone}`}>{value}</p>
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
     </div>

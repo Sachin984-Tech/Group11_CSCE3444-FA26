@@ -3,24 +3,23 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
-  ChevronDown,
+  ChevronRight,
   Compass,
   HelpCircle,
   Info,
-  Layers,
   ListTree,
   PlayCircle,
   Sparkles,
-  Trophy,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { TOPIC_MAP } from "@/lib/questionBank";
+import { rankTopics } from "@/lib/studyEngine";
 import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
-import type { RankedTopic, TopicId } from "@/lib/types";
+import type { TopicId } from "@/lib/types";
 
 const accentRing: Record<string, string> = {
   emerald: "ring-emerald-400/40",
@@ -55,27 +54,14 @@ export function StudyPathScreen() {
   const quizTopicIds = useAppStore((s) => s.quizTopicIds);
 
   const ranked = useMemo(
-    () =>
-      quizTopicIds
-        .map((id) => TOPIC_MAP[id])
-        .map((topic) => ({
-          topic,
-          mastery: masteryByTopic.get(topic.id) ?? null,
-        }))
-        .sort((a, b) => {
-          const sa = a.mastery?.score ?? 0;
-          const sb = b.mastery?.score ?? 0;
-          if (sa !== sb) return sa - sb;
-          return a.topic.defaultOrder - b.topic.defaultOrder;
-        })
-        .map((entry, idx) => ({
-          ...entry,
-          rank: idx + 1,
-        })) as RankedTopic[],
+    () => rankTopics(masteryByTopic, quizTopicIds),
     [masteryByTopic, quizTopicIds],
   );
 
   const [whyOpen, setWhyOpen] = useState<TopicId | null>(null);
+
+  const whyTopic = whyOpen ? TOPIC_MAP[whyOpen] : null;
+  const whyEntry = whyOpen ? ranked.find((r) => r.topic.id === whyOpen) : null;
 
   if (!quizComplete) {
     return (
@@ -90,10 +76,11 @@ export function StudyPathScreen() {
           >
             <Compass className="h-7 w-7 text-amber-200" />
           </motion.div>
-          <h1 className="mt-5 text-xl font-semibold">No study path yet</h1>
+          <h2 className="mt-5 text-xl font-semibold">No study path yet</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Take the diagnostic quiz first - your personalized study path appears
-            here, ranked by your weakest topics and pulled-apart prerequisites.
+            Take the diagnostic quiz first - your personalized study path
+            appears here, ranked by your weakest topics and pulled-apart
+            prerequisites.
           </p>
           <Button
             onClick={() => go("quiz")}
@@ -106,10 +93,6 @@ export function StudyPathScreen() {
       </div>
     );
   }
-
-  const whyTopic = whyOpen ? TOPIC_MAP[whyOpen] : null;
-  const whyMastery = whyOpen ? masteryByTopic.get(whyOpen) ?? null : null;
-  const whyEntry = whyOpen ? ranked.find((r) => r.topic.id === whyOpen) : null;
 
   return (
     <div className="relative px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
@@ -142,7 +125,7 @@ export function StudyPathScreen() {
               className="glass border-border/50"
             >
               <Sparkles className="h-3.5 w-3.5 mr-1" />
-              Start practice
+              Practice weakest
             </Button>
           </div>
         </motion.div>
@@ -215,7 +198,7 @@ export function StudyPathScreen() {
                         >
                           {topic.icon}
                           <span
-                            className={`absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border/60 flex items-center justify-center text-xs font-mono font-bold`}
+                            className={`absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border/60 flex items-center justify-center text-[10px] font-mono font-bold`}
                           >
                             {entry.rank}
                           </span>
@@ -225,7 +208,7 @@ export function StudyPathScreen() {
                           <div className="flex flex-wrap items-baseline gap-2">
                             <h3 className="text-base sm:text-lg font-semibold">{topic.name}</h3>
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-md uppercase tracking-[0.16em] ${
+                              className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-[0.16em] ${
                                 cls === "mastered"
                                   ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30"
                                   : cls === "developing"
@@ -233,7 +216,7 @@ export function StudyPathScreen() {
                                     : "bg-rose-500/15 text-rose-300 ring-1 ring-rose-400/30"
                               }`}
                             >
-                              {isOptional ? "Optional review" : labelsFor(cls)}
+                              {isOptional ? "Optional review" : labelFor(cls)}
                             </span>
                           </div>
                           <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -265,10 +248,7 @@ export function StudyPathScreen() {
 
                           {topic.prerequisites.length > 0 ? (
                             <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Layers className="h-3 w-3" />
-                                Depends on:
-                              </span>
+                              <span>Depends on:</span>
                               {topic.prerequisites.map((pid) => {
                                 const pm = masteryByTopic.get(pid);
                                 const pcls = pm?.classification;
@@ -320,29 +300,19 @@ export function StudyPathScreen() {
           </AnimatePresence>
         </div>
 
-        <div className="mt-6 p-4 rounded-2xl glass border border-border/30 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <Trophy className="h-5 w-5 text-amber-300 shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">Goal tracker</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Push every topic to <strong className="text-emerald-300">Mastered</strong> (≥ 80%). The path will reorder as you
-              practice - strong topics drift to the bottom automatically.
-            </p>
-          </div>
-          <Button
-            onClick={() => go("progress")}
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            View progress chart
-            <ArrowRight className="h-3.5 w-3.5 ml-1" />
-          </Button>
+        <div className="mt-6 p-4 rounded-2xl glass border border-border/30 flex items-start gap-3">
+          <Sparkles className="h-4 w-4 text-fuchsia-300 shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            Answer practice questions and watch the path rerank in real time.
+            Mastery recalculates from your last 10 attempts per topic.
+            <strong className="text-foreground"> FR-06 (Topic Progress Chart)</strong>{" "}
+            lands in the next commit.
+          </p>
         </div>
       </div>
 
       <AnimatePresence>
-        {whyOpen && whyTopic ? (
+        {whyOpen && whyTopic && whyEntry ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -373,8 +343,8 @@ export function StudyPathScreen() {
                   {whyTopic.icon}
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Why is {whyTopic.name} ranked #{whyEntry?.rank}?
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Why is {whyTopic.name} ranked #{whyEntry.rank}?
                   </p>
                   <h3 className="text-lg font-semibold">{whyTopic.name}</h3>
                 </div>
@@ -382,25 +352,23 @@ export function StudyPathScreen() {
 
               <div className="mt-4 p-3 rounded-xl bg-muted/30 border border-border/30">
                 <p className="text-sm leading-relaxed text-foreground">
-                  {whyMastery
-                    ? whyExplanation(whyTopic.name, whyMastery.score, whyMastery.correctCount, whyMastery.attemptCount, whyMastery.classification, whyTopic.prerequisites, masteryByTopic)
-                    : "No diagnostic data yet - take the quiz to get a real explanation."}
+                  {whyEntry.reason}
                 </p>
               </div>
 
-              {whyMastery ? (
+              {whyEntry.mastery ? (
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-lg bg-muted/30">
-                    <p className="text-lg font-mono font-bold">{whyMastery.score}%</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Mastery</p>
+                    <p className="text-lg font-mono font-bold">{whyEntry.mastery.score}%</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Mastery</p>
                   </div>
                   <div className="p-2 rounded-lg bg-muted/30">
-                    <p className="text-lg font-mono font-bold">{whyMastery.correctCount}/{whyMastery.attemptCount}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Recent</p>
+                    <p className="text-lg font-mono font-bold">{whyEntry.mastery.correctCount}/{whyEntry.mastery.attemptCount}</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Recent</p>
                   </div>
                   <div className="p-2 rounded-lg bg-muted/30">
                     <p className="text-lg font-mono font-bold">{whyTopic.prerequisites.length}</p>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Prereqs</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Prereqs</p>
                   </div>
                 </div>
               ) : null}
@@ -408,8 +376,8 @@ export function StudyPathScreen() {
               <div className="mt-4 flex items-center gap-2">
                 <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Explanations update every time your mastery recalculates - usually
-                  right after you answer a practice question.
+                  Explanations update every time your mastery recalculates -
+                  usually right after you answer a practice question.
                 </p>
               </div>
 
@@ -438,32 +406,8 @@ export function StudyPathScreen() {
   );
 }
 
-function labelsFor(cls: string | undefined) {
+function labelFor(cls: string | undefined) {
   if (cls === "mastered") return "Mastered";
   if (cls === "developing") return "Developing";
   return "Needs work";
-}
-
-function whyExplanation(
-  name: string,
-  score: number,
-  correct: number,
-  total: number,
-  cls: string | undefined,
-  prerequisites: TopicId[],
-  masteryByTopic: Map<TopicId, { score: number; classification: string }>,
-): string {
-  if (score >= 80) {
-    return `${name} is ranked low-priority because you answered ${correct} of ${total} correctly (${score}%) - that's Mastered. Marked as Optional Review, but feel free to revisit when you have spare time.`;
-  }
-  const weakPrereqs = prerequisites
-    .map((id) => ({ id, m: masteryByTopic.get(id) }))
-    .filter((x) => x.m && x.m.score < 50)
-    .map((x) => TOPIC_MAP[x.id].name);
-
-  let base = `${name} sits at rank here because you answered ${correct} of ${total} correctly (${score}%), classifying as ${labelsFor(cls)}.`;
-  if (weakPrereqs.length > 0) {
-    base += ` It also depends on ${weakPrereqs.join(", ")} - those scored below 50%, so they're scheduled ahead of ${name} to keep you from building on shaky foundations.`;
-  }
-  return base;
 }
