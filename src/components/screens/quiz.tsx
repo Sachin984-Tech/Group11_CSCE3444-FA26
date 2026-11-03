@@ -133,7 +133,7 @@ export function QuizScreen() {
                       <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                         {t.blurb}
                       </p>
-                      <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                         3 questions - ~90s
                       </p>
                     </div>
@@ -298,7 +298,7 @@ export function QuizScreen() {
         <div className="mt-4 flex items-center gap-2">
           <span className="text-2xl font-mono">{topic.icon}</span>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Topic
             </p>
             <p className="text-sm font-semibold">{topic.name}</p>

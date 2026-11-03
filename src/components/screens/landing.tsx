@@ -237,7 +237,7 @@ export function LandingScreen() {
                       {f.desc}
                     </p>
                     <p
-                      className={`mt-2 text-[10px] font-mono uppercase tracking-[0.16em] ${
+                      className={`mt-2 text-xs font-mono uppercase tracking-[0.16em] ${
                         isLive ? "text-emerald-300" : "text-muted-foreground"
                       }`}
                     >

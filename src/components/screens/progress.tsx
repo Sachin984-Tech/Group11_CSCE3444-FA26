@@ -105,7 +105,7 @@ export function ProgressScreen() {
           >
             <BarChart3 className="h-7 w-7 text-violet-200" />
           </motion.div>
-          <h2 className="mt-5 text-xl font-semibold">No progress to chart yet</h2>
+          <h1 className="mt-5 text-xl font-semibold">No progress to chart yet</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Take the diagnostic quiz first - once you have at least one Mastery
             Score per topic, the chart and table will populate here.
@@ -395,7 +395,7 @@ function SummaryCard({
       className="rounded-xl p-3 sm:p-4 glass border border-border/30"
     >
       <div className="flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
           {label}
         </p>
         <div className={`h-7 w-7 rounded-md bg-muted/40 ring-1 ${ring} flex items-center justify-center`}>

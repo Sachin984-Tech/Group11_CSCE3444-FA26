@@ -256,7 +256,7 @@ export function PracticeScreen() {
                   <span className={`text-xl font-mono ${accentText[topic.accent]}`}>
                     {topic.icon}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     {topic.name} · practice
                   </span>
                 </div>
@@ -403,7 +403,7 @@ function Metric({
     <div className="rounded-xl p-3 glass border border-border/30 text-center">
       <Icon className={`h-3.5 w-3.5 mx-auto ${tone}`} />
       <p className={`mt-1 text-lg font-mono font-bold ${tone}`}>{value}</p>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
     </div>

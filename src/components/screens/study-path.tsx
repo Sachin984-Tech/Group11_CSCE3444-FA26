@@ -76,7 +76,7 @@ export function StudyPathScreen() {
           >
             <Compass className="h-7 w-7 text-amber-200" />
           </motion.div>
-          <h2 className="mt-5 text-xl font-semibold">No study path yet</h2>
+          <h1 className="mt-5 text-xl font-semibold">No study path yet</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Take the diagnostic quiz first - your personalized study path
             appears here, ranked by your weakest topics and pulled-apart
@@ -198,7 +198,7 @@ export function StudyPathScreen() {
                         >
                           {topic.icon}
                           <span
-                            className={`absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border/60 flex items-center justify-center text-[10px] font-mono font-bold`}
+                            className={`absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border/60 flex items-center justify-center text-xs font-mono font-bold`}
                           >
                             {entry.rank}
                           </span>
@@ -208,7 +208,7 @@ export function StudyPathScreen() {
                           <div className="flex flex-wrap items-baseline gap-2">
                             <h3 className="text-base sm:text-lg font-semibold">{topic.name}</h3>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-md uppercase tracking-[0.16em] ${
+                              className={`text-xs px-2 py-0.5 rounded-md uppercase tracking-[0.16em] ${
                                 cls === "mastered"
                                   ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30"
                                   : cls === "developing"
@@ -343,7 +343,7 @@ export function StudyPathScreen() {
                   {whyTopic.icon}
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     Why is {whyTopic.name} ranked #{whyEntry.rank}?
                   </p>
                   <h3 className="text-lg font-semibold">{whyTopic.name}</h3>
@@ -360,15 +360,15 @@ export function StudyPathScreen() {
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-lg bg-muted/30">
                     <p className="text-lg font-mono font-bold">{whyEntry.mastery.score}%</p>
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Mastery</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Mastery</p>
                   </div>
                   <div className="p-2 rounded-lg bg-muted/30">
                     <p className="text-lg font-mono font-bold">{whyEntry.mastery.correctCount}/{whyEntry.mastery.attemptCount}</p>
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Recent</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Recent</p>
                   </div>
                   <div className="p-2 rounded-lg bg-muted/30">
                     <p className="text-lg font-mono font-bold">{whyTopic.prerequisites.length}</p>
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Prereqs</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Prereqs</p>
                   </div>
                 </div>
               ) : null}

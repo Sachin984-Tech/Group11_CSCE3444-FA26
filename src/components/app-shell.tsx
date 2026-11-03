@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-semibold leading-tight">
                 Adaptive Study Path
               </p>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 Engine · v1.0
               </p>
             </div>
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs font-semibold leading-tight truncate max-w-[12rem]">
                   {user?.displayName || "Learner"}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate max-w-[12rem]">
+                <p className="text-xs text-muted-foreground truncate max-w-[12rem]">
                   {user?.email}
                 </p>
               </div>
