@@ -1,17 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Brain, Compass, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import {
+  Brain,
+  Compass,
+  LayoutDashboard,
+  LogOut,
+  Route,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import { useAppStore } from "@/lib/store";
-import { Button } from "@/components/ui/button";
 import type { Screen } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
-  { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "quiz", label: "Diagnostic", icon: Compass },
-  { id: "study-path", label: "Study Path", icon: RouteIcon },
-  { id: "practice", label: "Practice", icon: PlayCircle },
-  { id: "progress", label: "Progress", icon: BarChart3 },
+  { id: "study-path", label: "Study Path", icon: Route },
+  { id: "practice", label: "Practice", icon: Sparkles },
+  { id: "progress", label: "Progress", icon: TrendingUp },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,6 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const screen = useAppStore((s) => s.screen);
   const go = useAppStore((s) => s.go);
   const logout = useAppStore((s) => s.logout);
+  const quizComplete = useAppStore((s) => s.quizComplete);
 
   const initial = (user?.displayName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
 
@@ -42,8 +51,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-semibold leading-tight">
                 Adaptive Study Path
               </p>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Engine · v1.0
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Engine - v0.6
               </p>
             </div>
           </button>
@@ -52,6 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {NAV.map((item) => {
               const Icon = item.icon;
               const active = screen === item.id;
+              const locked = item.id === "study-path" && !quizComplete && screen !== "study-path";
               return (
                 <button
                   key={item.id}
@@ -73,6 +83,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   ) : null}
+                  {locked ? (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400/80" />
+                  ) : null}
                 </button>
               );
             })}
@@ -87,7 +100,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs font-semibold leading-tight truncate max-w-[12rem]">
                   {user?.displayName || "Learner"}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate max-w-[12rem]">
+                <p className="text-xs text-muted-foreground truncate max-w-[12rem]">
                   {user?.email}
                 </p>
               </div>
@@ -146,7 +159,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 through FR-06 complete - Release 1.0
+            Frontend demo - Firebase Auth + Firestore pending integration
           </p>
         </div>
       </footer>

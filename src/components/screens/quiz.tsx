@@ -14,8 +14,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useAppStore } from "@/lib/store";
-import { TOPICS, TOPIC_MAP, diagnosticQuestionsForTopics } from "@/lib/questionBank";
+import { useAppStore, diagnosticQuestionSet } from "@/lib/store";
+import { TOPICS, TOPIC_MAP } from "@/lib/questionBank";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AuroraBg } from "@/components/aurora-bg";
@@ -32,11 +32,11 @@ export function QuizScreen() {
   const resetQuiz = useAppStore((s) => s.resetQuiz);
   const quizComplete = useAppStore((s) => s.quizComplete);
 
-  const [phase, setPhase] = useState<Phase>("configure");
+  const [phase, setPhase] = useState<Phase>(quizComplete ? "configure" : "configure");
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
-  const questions = useMemo(() => diagnosticQuestionsForTopics(quizTopicIds), [quizTopicIds]);
+  const questions = useMemo(() => diagnosticQuestionSet(quizTopicIds), [quizTopicIds]);
   const total = questions.length;
   const answeredCount = quizAnswers.length;
   const progressPct = total === 0 ? 0 : Math.round((answeredCount / total) * 100);
@@ -89,7 +89,7 @@ export function QuizScreen() {
             className="flex items-center gap-2 text-xs text-muted-foreground"
           >
             <ListChecks className="h-3.5 w-3.5" />
-            Configure your diagnostic quiz
+            Step 1 of 2 - Configure
           </motion.div>
           <h1 className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight">
             Diagnostic Quiz
@@ -133,7 +133,7 @@ export function QuizScreen() {
                       <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                         {t.blurb}
                       </p>
-                      <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                         3 questions - ~90s
                       </p>
                     </div>
@@ -178,7 +178,7 @@ export function QuizScreen() {
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
                 You've already submitted a diagnostic. Retaking will overwrite
-                your previous scores.
+                your previous scores and rebuild the study path from scratch.
               </p>
               <Button
                 onClick={() => {
@@ -218,7 +218,7 @@ export function QuizScreen() {
             transition={{ delay: 0.25 }}
             className="mt-6 text-2xl font-semibold"
           >
-            Scoring your answers...
+            Scoring your answers…
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 14 }}
@@ -226,10 +226,11 @@ export function QuizScreen() {
             transition={{ delay: 0.4 }}
             className="mt-2 text-sm text-muted-foreground"
           >
-            Calculating per-topic scores and classifying mastery bands.
+            Calculating per-topic Mastery Scores, classifying bands, and ranking
+            your study path.
           </motion.p>
           <div className="mt-6 space-y-2">
-            {["Scoring answers", "Classifying bands", "Saving results"].map((step, i) => (
+            {["Scoring", "Classifying", "Ranking prerequisites", "Building path"].map((step, i) => (
               <motion.div
                 key={step}
                 initial={{ opacity: 0, x: -10 }}
@@ -238,7 +239,7 @@ export function QuizScreen() {
                 className="flex items-center gap-2 text-xs text-muted-foreground"
               >
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                {step}...
+                {step}…
               </motion.div>
             ))}
           </div>
@@ -298,7 +299,7 @@ export function QuizScreen() {
         <div className="mt-4 flex items-center gap-2">
           <span className="text-2xl font-mono">{topic.icon}</span>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Topic
             </p>
             <p className="text-sm font-semibold">{topic.name}</p>
