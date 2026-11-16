@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Flame,
   Lightbulb,
+  ListTree,
   Loader2,
   Sparkles,
   Target,
@@ -15,6 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { TOPIC_MAP, QUESTIONS } from "@/lib/questionBank";
+import { explainPathChange, rankTopics, type PathChange } from "@/lib/studyEngine";
 import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
@@ -71,6 +73,8 @@ export function PracticeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [streak, setStreak] = useState(0);
+  const [pathChanges, setPathChanges] = useState<PathChange[] | null>(null);
+  const [rankNow, setRankNow] = useState<number | null>(null);
 
   useEffect(() => {
     if (!practiceTopicId) return;
@@ -99,7 +103,7 @@ export function PracticeScreen() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
             Pick any topic to start answering practice questions. The mastery
-            score for that topic recalculates from your last 10 answers, and
+            score for that topic recalculates from your last 10 answers (diagnostic included), and
             your study path reranks in real time.
           </p>
           <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -176,7 +180,15 @@ export function PracticeScreen() {
       questionId: currentQuestion.id,
     });
     setStreak((s) => (correct ? s + 1 : 0));
+
+    // Rank before and after this answer, so we can explain any change (FR-05).
+    const before = useAppStore.getState();
+    const rankedBefore = rankTopics(before.masteryByTopic, before.quizTopicIds, before.attempts);
     recordAttempt(attempt);
+    const after = useAppStore.getState();
+    const rankedAfter = rankTopics(after.masteryByTopic, after.quizTopicIds, after.attempts);
+    setPathChanges(explainPathChange(rankedBefore, rankedAfter, attempt.topicId));
+    setRankNow(rankedAfter.find((r) => r.topic.id === attempt.topicId)?.rank ?? null);
   }
 
   function nextQuestion() {
@@ -190,6 +202,7 @@ export function PracticeScreen() {
       setCurrentQuestionId(pick.id);
       setSelected(null);
       setFeedback(null);
+      setPathChanges(null);
     }
   }
 
@@ -380,6 +393,43 @@ export function PracticeScreen() {
                   <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {feedback && pathChanges ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              role="status"
+              aria-live="polite"
+              className={`mt-3 rounded-2xl p-4 border ${
+                pathChanges.length > 0 ? "bg-violet-500/10 border-violet-400/30" : "glass border-border/30"
+              }`}
+            >
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <ListTree className="h-4 w-4 text-violet-300" aria-hidden="true" />
+                {pathChanges.length > 0 ? "Path updated" : "Path unchanged"}
+              </p>
+              {pathChanges.length > 0 ? (
+                <ul className="mt-2 space-y-1.5">
+                  {pathChanges.slice(0, 3).map((c) => (
+                    <li key={c.topicId} className="text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-mono text-foreground">
+                        #{c.from} → #{c.to}
+                      </span>{" "}
+                      {c.explanation}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {topic.name} stays at #{rankNow ?? "?"} with mastery {mastery ? `${mastery.score}%` : "—"}. The
+                  order changes once a score crosses a neighbouring topic or a mastery band.
+                </p>
+              )}
             </motion.div>
           ) : null}
         </AnimatePresence>

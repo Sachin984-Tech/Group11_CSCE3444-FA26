@@ -56,11 +56,22 @@ export interface MasteryScore {
   classification: MasteryClass;
 }
 
+export type ReasonTagKind = "lowest" | "weak-prereq" | "pulled-ahead" | "unlocks" | "stale" | "mastered" | "no-data";
+
+/** Short labelled reason shown as a chip on each study-path card (FR-05). */
+export interface ReasonTag {
+  kind: ReasonTagKind;
+  label: string;
+}
+
 export interface RankedTopic {
   topic: Topic;
   rank: number;
   mastery: MasteryScore | null;
   reason: string;
+  /** One-line version of `reason` for cards and the dashboard. */
+  summary: string;
+  tags: ReasonTag[];
 }
 
 export interface PracticeAttempt {

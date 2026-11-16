@@ -157,7 +157,7 @@ export const useAppStore = create<AppState>()(
         set((s) => {
           const nextAttempts = [...s.attempts, attempt];
           const nextMastery = new Map<TopicId, MasteryScore>(s.masteryByTopic);
-          const updated = recomputeMasteryWithAttempts(attempt.topicId, nextAttempts);
+          const updated = recomputeMasteryWithAttempts(attempt.topicId, nextAttempts, 10, s.quizComplete ? s.quizAnswers : []);
           nextMastery.set(attempt.topicId, updated);
           return {
             attempts: nextAttempts,

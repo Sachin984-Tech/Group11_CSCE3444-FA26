@@ -1,5 +1,5 @@
-import { TOPIC_MAP, QUESTIONS } from "./questionBank";
-import type { MasteryClass, MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, RankedTopic, Topic, TopicId } from "./types";
+import { TOPICS, TOPIC_MAP, QUESTIONS } from "./questionBank";
+import type { MasteryClass, MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, RankedTopic, ReasonTag, Topic, TopicId } from "./types";
 
 export function classify(score: number): MasteryClass {
   if (score >= 80) return "mastered";
@@ -50,6 +50,8 @@ export function masteryFromQuiz(results: QuizResult[]): MasteryScore[] {
 export function rankTopics(
   masteryByTopic: Map<TopicId, MasteryScore>,
   availableTopicIds: TopicId[],
+  attempts: PracticeAttempt[] = [],
+  now: number = Date.now(),
 ): RankedTopic[] {
   const present = availableTopicIds.map((id) => TOPIC_MAP[id]).filter(Boolean);
   const scored = present.map((t) => ({
@@ -64,18 +66,26 @@ export function rankTopics(
     return a.topic.defaultOrder - b.topic.defaultOrder;
   });
 
+  // Pull weak prerequisites ahead of weak dependents. Repeat until nothing
+  // moves: a prerequisite that was just pulled forward may itself have a
+  // weak prerequisite that now sits behind it (e.g. Trees -> Stacks & Queues
+  // -> Linked Lists). The topic graph is acyclic, so this always settles.
   const ordered = [...scored];
-  for (let i = 0; i < ordered.length; i += 1) {
-    const current = ordered[i];
-    for (const prereqId of current.topic.prerequisites) {
-      const prereqIdx = ordered.findIndex((o) => o.topic.id === prereqId);
-      if (prereqIdx === -1) continue;
-      const prereq = ordered[prereqIdx];
-      const prereqIsWeak = (prereq.mastery?.score ?? 0) < 50;
-      const dependentIsWeak = (current.mastery?.score ?? 0) < 50;
-      if (prereqIsWeak && prereqIdx > i && dependentIsWeak) {
-        const [moved] = ordered.splice(prereqIdx, 1);
-        ordered.splice(i, 0, moved);
+  const isWeak = (o: (typeof ordered)[number]) => (o.mastery?.score ?? 0) < 50;
+  let moved = true;
+  for (let pass = 0; moved && pass < ordered.length * ordered.length; pass += 1) {
+    moved = false;
+    for (let i = 0; i < ordered.length && !moved; i += 1) {
+      const current = ordered[i];
+      if (!isWeak(current)) continue;
+      for (const prereqId of current.topic.prerequisites) {
+        const prereqIdx = ordered.findIndex((o) => o.topic.id === prereqId);
+        if (prereqIdx > i && isWeak(ordered[prereqIdx])) {
+          const [prereq] = ordered.splice(prereqIdx, 1);
+          ordered.splice(i, 0, prereq);
+          moved = true;
+          break;
+        }
       }
     }
   }
@@ -87,13 +97,117 @@ export function rankTopics(
     (o) => (o.mastery?.classification ?? "needs-work") !== "mastered",
   );
   const finalOrder = [...rest, ...masteredTail];
+  const scoreOrder = scored.map((s) => s.topic.id);
 
   return finalOrder.map((entry, idx) => ({
     topic: entry.topic,
     rank: idx + 1,
     mastery: entry.mastery,
     reason: buildReason(entry.topic, entry.mastery, masteryByTopic),
+    summary: buildSummary(entry.topic, entry.mastery, masteryByTopic),
+    tags: buildTags(entry.topic, entry.mastery, masteryByTopic, {
+      rank: idx + 1,
+      scoreRank: scoreOrder.indexOf(entry.topic.id) + 1,
+      lowestScore: Math.min(...rest.map((r) => r.mastery?.score ?? 0)),
+      available: availableTopicIds,
+      attempts,
+      now,
+    }),
   }));
+}
+
+const STALE_AFTER_MS = 3 * 24 * 60 * 60 * 1000;
+
+/** Topics that list `id` as a direct prerequisite. */
+export function dependentsOf(id: TopicId, available: TopicId[]): TopicId[] {
+  return TOPICS.filter((t) => available.includes(t.id) && t.prerequisites.includes(id)).map((t) => t.id);
+}
+
+function weakPrereqNames(topic: Topic, masteryByTopic: Map<TopicId, MasteryScore>): string[] {
+  return topic.prerequisites
+    .filter((id) => {
+      const m = masteryByTopic.get(id);
+      return m !== undefined && m.score < 50;
+    })
+    .map((id) => TOPIC_MAP[id].name);
+}
+
+function buildSummary(
+  topic: Topic,
+  mastery: MasteryScore | null,
+  masteryByTopic: Map<TopicId, MasteryScore>,
+): string {
+  if (!mastery) return "No data yet - take the quiz to rank this topic.";
+  const base = `${mastery.correctCount}/${mastery.attemptCount} correct (${mastery.score}%)`;
+  if (mastery.score >= 80) return `${base} - already mastered, so it's optional review.`;
+  const weak = weakPrereqNames(topic, masteryByTopic);
+  if (weak.length > 0) {
+    return `${base}, but ${weak.join(" and ")} should come first - ${weak.length === 1 ? "it's a weak prerequisite" : "they're weak prerequisites"}.`;
+  }
+  return `${base} - ${labelFor(mastery.classification).toLowerCase()}, so it's scheduled ${mastery.score < 50 ? "early" : "after your weakest topics"}.`;
+}
+
+function buildTags(
+  topic: Topic,
+  mastery: MasteryScore | null,
+  masteryByTopic: Map<TopicId, MasteryScore>,
+  ctx: { rank: number; scoreRank: number; lowestScore: number; available: TopicId[]; attempts: PracticeAttempt[]; now: number },
+): ReasonTag[] {
+  if (!mastery) return [{ kind: "no-data", label: "No data yet" }];
+  if (mastery.classification === "mastered") return [{ kind: "mastered", label: "Mastered" }];
+
+  const tags: ReasonTag[] = [];
+  if (mastery.score === ctx.lowestScore) tags.push({ kind: "lowest", label: "Lowest score" });
+  if (ctx.rank < ctx.scoreRank) tags.push({ kind: "pulled-ahead", label: "Pulled ahead as a prerequisite" });
+
+  const weak = weakPrereqNames(topic, masteryByTopic);
+  if (weak.length > 0) tags.push({ kind: "weak-prereq", label: `Weak prerequisite: ${weak.join(", ")}` });
+
+  const deps = dependentsOf(topic.id, ctx.available);
+  if (deps.length > 0) tags.push({ kind: "unlocks", label: `Unlocks ${deps.length} topic${deps.length === 1 ? "" : "s"}` });
+
+  const lastPractice = ctx.attempts.filter((a) => a.topicId === topic.id).slice(-1)[0]?.timestamp;
+  if (!lastPractice || ctx.now - lastPractice > STALE_AFTER_MS) {
+    tags.push({ kind: "stale", label: lastPractice ? "Not practiced in 3+ days" : "Not practiced yet" });
+  }
+  return tags;
+}
+
+export interface PathChange {
+  topicId: TopicId;
+  from: number;
+  to: number;
+  explanation: string;
+}
+
+/**
+ * Compares two rankings and explains every topic whose rank changed -
+ * used to show "Path updated" right after a practice answer.
+ */
+export function explainPathChange(before: RankedTopic[], after: RankedTopic[], practicedId: TopicId): PathChange[] {
+  const changes: PathChange[] = [];
+  for (const a of after) {
+    const b = before.find((x) => x.topic.id === a.topic.id);
+    if (!b || b.rank === a.rank) continue;
+    const name = a.topic.name;
+    const m = a.mastery;
+    let explanation: string;
+    if (a.topic.id === practicedId && m) {
+      explanation =
+        a.rank > b.rank
+          ? `${name} moved down because your mastery rose to ${m.score}% (${labelFor(m.classification)}).`
+          : `${name} moved up because your mastery dropped to ${m.score}% (${labelFor(m.classification)}).`;
+    } else {
+      const practiced = TOPIC_MAP[practicedId].name;
+      explanation =
+        a.rank < b.rank
+          ? `${name} moved up because ${practiced} moved below it.`
+          : `${name} moved down because ${practiced} now needs more work.`;
+    }
+    changes.push({ topicId: a.topic.id, from: b.rank, to: a.rank, explanation });
+  }
+  // Practiced topic first, then by new rank.
+  return changes.sort((x, y) => (x.topicId === practicedId ? -1 : y.topicId === practicedId ? 1 : x.to - y.to));
 }
 
 function buildReason(
@@ -130,14 +244,21 @@ function labelFor(cls: MasteryClass): string {
   return "Needs Work";
 }
 
+/**
+ * Mastery = share correct over the last `windowSize` answers for a topic.
+ * Diagnostic answers count as the oldest answers in that window, so one lucky
+ * practice answer right after the quiz can't jump a topic straight to 100%.
+ */
 export function recomputeMasteryWithAttempts(
   topicId: TopicId,
   attempts: PracticeAttempt[],
   windowSize = 10,
+  diagnosticAnswers: QuizAnswer[] = [],
 ): MasteryScore {
-  const recent = attempts
+  const seeded: { correct: boolean }[] = diagnosticAnswers
     .filter((a) => a.topicId === topicId)
-    .slice(-windowSize);
+    .map((a) => ({ correct: QUESTIONS.find((q) => q.id === a.questionId)?.correctOptionId === a.selectedOptionId }));
+  const recent = [...seeded, ...attempts.filter((a) => a.topicId === topicId)].slice(-windowSize);
   const total = recent.length;
   const correct = recent.filter((a) => a.correct).length;
   const score = total === 0 ? 0 : Math.round((correct / total) * 100);

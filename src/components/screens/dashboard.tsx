@@ -5,7 +5,9 @@ import {
   ArrowRight,
   CheckCircle2,
   Compass,
+  Lightbulb,
   ListChecks,
+  PlayCircle,
   Route as RouteIcon,
   Sparkles,
   Trophy,
@@ -16,6 +18,7 @@ import { classify, rankTopics } from "@/lib/studyEngine";
 import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
+import { ReasonTags } from "@/components/reason-tags";
 
 const accentRing: Record<string, string> = {
   emerald: "ring-emerald-400/40 text-emerald-300",
@@ -40,8 +43,11 @@ export function DashboardScreen() {
   const quizComplete = useAppStore((s) => s.quizComplete);
   const masteryByTopic = useAppStore((s) => s.masteryByTopic);
   const quizTopicIds = useAppStore((s) => s.quizTopicIds);
+  const attempts = useAppStore((s) => s.attempts);
+  const startPractice = useAppStore((s) => s.startPractice);
 
-  const ranked = quizComplete ? rankTopics(masteryByTopic, quizTopicIds).slice(0, 3) : [];
+  const ranked = quizComplete ? rankTopics(masteryByTopic, quizTopicIds, attempts).slice(0, 3) : [];
+  const next = ranked.find((r) => r.mastery?.classification !== "mastered") ?? ranked[0];
 
   const hourOfDay = new Date().getHours();
   const greeting = hourOfDay < 12 ? "Good morning" : hourOfDay < 18 ? "Good afternoon" : "Good evening";
@@ -87,6 +93,45 @@ export function DashboardScreen() {
             <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         </motion.div>
+
+        {quizComplete && next ? (
+          <motion.section
+            aria-labelledby="next-step-heading"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-6 rounded-2xl p-6 border border-fuchsia-400/30 bg-gradient-to-br from-fuchsia-500/15 via-violet-500/10 to-transparent"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="h-14 w-14 shrink-0 rounded-xl bg-gradient-to-br from-fuchsia-500/30 to-violet-700/10 ring-1 ring-fuchsia-400/40 flex items-center justify-center font-mono text-2xl">
+                {next.topic.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-[0.2em] text-fuchsia-200 flex items-center gap-1.5">
+                  <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />
+                  Next best step
+                </p>
+                <h2 id="next-step-heading" className="mt-1 text-xl font-semibold">
+                  Practice {next.topic.name}
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{next.reason}</p>
+                <ReasonTags tags={next.tags} className="mt-3" />
+              </div>
+              <div className="flex sm:flex-col gap-2 shrink-0">
+                <Button
+                  onClick={() => startPractice(next.topic.id)}
+                  className="bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 text-white border-0"
+                >
+                  <PlayCircle className="h-4 w-4 mr-1" />
+                  Practice now
+                </Button>
+                <Button onClick={() => go("study-path")} variant="outline" className="glass border-border/50">
+                  See full path
+                </Button>
+              </div>
+            </div>
+          </motion.section>
+        ) : null}
 
         {quizComplete ? (
           <motion.div
@@ -144,6 +189,7 @@ export function DashboardScreen() {
                             {m.score}% - {m.correctCount}/{m.attemptCount}
                           </span>
                         </div>
+                        <p className="mb-1.5 text-[11px] text-muted-foreground">{entry.summary}</p>
                         <div className="relative h-2 rounded-full bg-muted/60 overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}

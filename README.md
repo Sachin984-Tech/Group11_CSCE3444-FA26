@@ -1,16 +1,17 @@
 # Adaptive Study Path Engine - Release 1.1
 
-**Commit 5 of 6 (Release 1.1) - F-10: Study history & progress trend**
+**Commit 6 of 6 (Release 1.1) - F-11: Smart recommendations (FR-05 v2)**
 
 Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds cloud accounts and new study features.
 
 ## What's new in this commit
 
-- New **History** screen
-- Line chart of average mastery over time, with a per-topic toggle and an accessible table view
-- Session timeline: diagnostics taken and practice sessions grouped by topic and day
-- Stats: total questions answered, accuracy, study days, and current day streak
-- Snapshots recorded after every diagnostic and practice answer, synced to Firestore
+- The *why* for each topic now shows **right on every study-path card**, not only in the popup
+- Reason tags on each card: *Lowest score*, *Weak prerequisite*, *Blocks N topics*, *Not practiced recently*, *Mastered*
+- Dashboard **Next best step** card: the top topic, the reason, and a one-click Practice button
+- After a practice answer that changes the order, a **Path updated** alert explains which topic moved and why
+- Fix: prerequisite reordering now repeats until stable, so a pulled-forward topic's own weak prerequisite also moves ahead of it
+- Fix: diagnostic answers count toward the 10-answer mastery window, so one practice answer can't jump a topic to 100%
 
 ## Release 1.1 progress
 
@@ -19,7 +20,7 @@ Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds clou
 - [x] Commit 3: F-08: Expanded & randomized diagnostic
 - [x] Commit 4: F-09: Answer review & mistake notebook
 - [x] Commit 5: F-10: Study history & progress trend
-- [ ] Commit 6: F-11: Smart recommendations (FR-05 v2)
+- [x] Commit 6: F-11: Smart recommendations (FR-05 v2)
 
 ## Release 1.0 features (done)
 

@@ -21,6 +21,7 @@ import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
 import type { TopicId } from "@/lib/types";
+import { ReasonTags } from "@/components/reason-tags";
 
 const accentRing: Record<string, string> = {
   emerald: "ring-emerald-400/40",
@@ -53,10 +54,11 @@ export function StudyPathScreen() {
   const go = useAppStore((s) => s.go);
   const startPractice = useAppStore((s) => s.startPractice);
   const quizTopicIds = useAppStore((s) => s.quizTopicIds);
+  const attempts = useAppStore((s) => s.attempts);
 
   const ranked = useMemo(
-    () => rankTopics(masteryByTopic, quizTopicIds),
-    [masteryByTopic, quizTopicIds],
+    () => rankTopics(masteryByTopic, quizTopicIds, attempts),
+    [masteryByTopic, quizTopicIds, attempts],
   );
 
   const [whyOpen, setWhyOpen] = useState<TopicId | null>(null);
@@ -233,6 +235,15 @@ export function StudyPathScreen() {
                             {topic.blurb}
                           </p>
 
+                          {/* FR-05: the reason is always visible on the card, not only in the popup. */}
+                          <div className="mt-3 rounded-lg bg-muted/30 border border-border/30 px-3 py-2">
+                            <p className="text-xs leading-relaxed">
+                              <span className="font-semibold text-fuchsia-200">Why #{entry.rank}: </span>
+                              {entry.summary}
+                            </p>
+                            <ReasonTags tags={entry.tags} className="mt-2" />
+                          </div>
+
                           {mastery ? (
                             <div className="mt-3">
                               <div className="flex items-center justify-between text-xs">
@@ -298,7 +309,8 @@ export function StudyPathScreen() {
                             className="glass border-border/50"
                           >
                             <HelpCircle className="h-3.5 w-3.5 mr-1" />
-                            <span className="hidden sm:inline">Why?</span>
+                            <span className="hidden sm:inline">Full reason</span>
+                            <span className="sr-only sm:hidden">Full reason for {topic.name}</span>
                           </Button>
                         </div>
                       </div>
@@ -314,9 +326,8 @@ export function StudyPathScreen() {
           <Sparkles className="h-4 w-4 text-fuchsia-300 shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
             Answer practice questions and watch the path rerank in real time.
-            Mastery recalculates from your last 10 attempts per topic.
-            <strong className="text-foreground"> FR-06 (Topic Progress Chart)</strong>{" "}
-            lands in the next commit.
+            Mastery recalculates from your last 10 answers per topic (diagnostic included), and the
+            reason on each card updates with it.
           </p>
         </div>
       </div>
@@ -364,6 +375,7 @@ export function StudyPathScreen() {
                 <p className="text-sm leading-relaxed text-foreground">
                   {whyEntry.reason}
                 </p>
+                <ReasonTags tags={whyEntry.tags} className="mt-3" />
               </div>
 
               {whyEntry.mastery ? (
