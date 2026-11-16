@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   ChevronRight,
+  ClipboardCheck,
   Compass,
   HelpCircle,
   Info,
@@ -118,6 +119,15 @@ export function StudyPathScreen() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={() => go("review")}
+              variant="outline"
+              size="sm"
+              className="glass border-border/50"
+            >
+              <ClipboardCheck className="h-3.5 w-3.5 mr-1" />
+              Review answers
+            </Button>
             <Button
               onClick={() => go("practice")}
               variant="outline"

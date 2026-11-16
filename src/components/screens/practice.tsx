@@ -56,6 +56,7 @@ type FeedbackState = {
 
 export function PracticeScreen() {
   const practiceTopicId = useAppStore((s) => s.practiceTopicId);
+  const practiceQuestionId = useAppStore((s) => s.practiceQuestionId);
   const masteryByTopic = useAppStore((s) => s.masteryByTopic);
   const practicedQuestionIds = useAppStore((s) => s.practicedQuestionIds);
   const attempts = useAppStore((s) => s.attempts);
@@ -74,13 +75,15 @@ export function PracticeScreen() {
   useEffect(() => {
     if (!practiceTopicId) return;
     const topicQs = questionBank.filter((q) => q.topicId === practiceTopicId);
-    const pick = topicQs[Math.floor(Math.random() * topicQs.length)] ?? topicQs[0];
+    // Retry from the mistake notebook opens that exact question first.
+    const requested = practiceQuestionId ? topicQs.find((q) => q.id === practiceQuestionId) : undefined;
+    const pick = requested ?? topicQs[Math.floor(Math.random() * topicQs.length)] ?? topicQs[0];
     if (pick) {
       setCurrentQuestionId(pick.id);
       setSelected(null);
       setFeedback(null);
     }
-  }, [practiceTopicId, questionBank]);
+  }, [practiceTopicId, practiceQuestionId, questionBank]);
 
   if (!practiceTopicId) {
     return (
@@ -162,6 +165,7 @@ export function PracticeScreen() {
       questionId: currentQuestion.id,
       topicId: currentQuestion.topicId,
       correct,
+      selectedOptionId: optionId,
       timestamp: Date.now(),
     };
     setFeedback({
@@ -355,6 +359,11 @@ export function PracticeScreen() {
                       {feedback.explanation}
                     </p>
                   </div>
+                  {!feedback.correct ? (
+                    <p className="mt-2 text-[11px] text-rose-200/90">
+                      Saved to your mistake notebook - retry it any time from Review.
+                    </p>
+                  ) : null}
                   {streak >= 3 ? (
                     <p className="mt-2 text-[11px] text-amber-300 flex items-center gap-1">
                       <Flame className="h-3 w-3" />

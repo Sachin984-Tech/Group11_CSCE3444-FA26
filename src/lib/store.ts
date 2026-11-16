@@ -21,6 +21,8 @@ interface AppState {
   masteryByTopic: Map<TopicId, MasteryScore>;
   attempts: PracticeAttempt[];
   practiceTopicId: TopicId | null;
+  /** A specific question to open in practice (Retry from the mistake notebook). */
+  practiceQuestionId: string | null;
   practicedQuestionIds: string[];
 
   login: (user: User) => void;
@@ -33,7 +35,7 @@ interface AppState {
   recordQuizAnswer: (q: QuizAnswer) => void;
   submitQuiz: () => void;
   resetQuiz: () => void;
-  startPractice: (topicId: TopicId) => void;
+  startPractice: (topicId: TopicId, questionId?: string) => void;
   recordAttempt: (attempt: PracticeAttempt) => void;
   exitPractice: () => void;
 }
@@ -47,6 +49,7 @@ const EMPTY_PROGRESS = {
   masteryByTopic: new Map<TopicId, MasteryScore>(),
   attempts: [] as PracticeAttempt[],
   practiceTopicId: null as TopicId | null,
+  practiceQuestionId: null as string | null,
   practicedQuestionIds: [] as string[],
 };
 
@@ -64,6 +67,7 @@ export const useAppStore = create<AppState>()(
       masteryByTopic: new Map<TopicId, MasteryScore>(),
       attempts: [],
       practiceTopicId: null,
+      practiceQuestionId: null,
       practicedQuestionIds: [],
 
       login: (user) =>
@@ -137,8 +141,8 @@ export const useAppStore = create<AppState>()(
           quizTopicIds: TOPICS.map((t) => t.id),
         }),
 
-      startPractice: (topicId) =>
-        set({ practiceTopicId: topicId, screen: "practice" }),
+      startPractice: (topicId, questionId) =>
+        set({ practiceTopicId: topicId, practiceQuestionId: questionId ?? null, screen: "practice" }),
 
       recordAttempt: (attempt) =>
         set((s) => {
@@ -153,7 +157,7 @@ export const useAppStore = create<AppState>()(
           };
         }),
 
-      exitPractice: () => set({ practiceTopicId: null, screen: "study-path" }),
+      exitPractice: () => set({ practiceTopicId: null, practiceQuestionId: null, screen: "study-path" }),
     }),
     {
       name: "aspe-store-v6",

@@ -67,10 +67,11 @@ export interface PracticeAttempt {
   questionId: string;
   topicId: TopicId;
   correct: boolean;
+  selectedOptionId?: string;
   timestamp: number;
 }
 
-export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress";
+export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress" | "review";
 
 export interface User {
   uid: string;

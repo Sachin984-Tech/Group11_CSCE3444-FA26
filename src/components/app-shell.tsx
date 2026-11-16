@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Brain, Cloud, CloudOff, Compass, HardDrive, Home, Loader2, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { BarChart3, Brain, ClipboardCheck, Cloud, CloudOff, Compass, HardDrive, Home, Loader2, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
   { id: "study-path", label: "Study Path", icon: RouteIcon },
   { id: "practice", label: "Practice", icon: PlayCircle },
   { id: "progress", label: "Progress", icon: BarChart3 },
+  { id: "review", label: "Review", icon: ClipboardCheck },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -82,7 +83,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   key={item.id}
                   onClick={() => go(item.id)}
-                  className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  aria-current={active ? "page" : undefined}
+                  className={`relative px-2.5 lg:px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     active
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -110,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center text-white text-sm font-semibold shadow-md shadow-fuchsia-500/30">
                 {initial}
               </div>
-              <div className="hidden lg:block">
+              <div className="hidden xl:block">
                 <p className="text-xs font-semibold leading-tight truncate max-w-[12rem]">
                   {user?.displayName || "Learner"}
                 </p>
@@ -207,7 +209,7 @@ function SyncBadge({ status }: { status: string }) {
     <span
       role="status"
       aria-live="polite"
-      className={`hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] ${item.tone}`}
+      className={`hidden 2xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] ${item.tone}`}
     >
       <Icon className={`h-3 w-3 ${item.spin ? "animate-spin" : ""}`} aria-hidden="true" />
       {item.label}
