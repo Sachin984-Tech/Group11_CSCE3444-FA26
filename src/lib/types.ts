@@ -21,8 +21,11 @@ export interface QuestionOption {
   text: string;
 }
 
+export type Difficulty = "easy" | "medium" | "hard";
+
 export interface Question {
   id: string;
+  difficulty: Difficulty;
   topicId: TopicId;
   prompt: string;
   options: QuestionOption[];

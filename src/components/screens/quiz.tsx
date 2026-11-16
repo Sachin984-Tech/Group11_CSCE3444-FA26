@@ -16,7 +16,8 @@ import {
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { recordDiagnosticSubmission } from "@/lib/cloudSync";
-import { TOPICS, TOPIC_MAP, diagnosticQuestionsForTopics } from "@/lib/questionBank";
+import { QUESTION_MAP, TOPICS, TOPIC_MAP } from "@/lib/questionBank";
+import { DifficultyBadge } from "@/components/difficulty-badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AuroraBg } from "@/components/aurora-bg";
@@ -32,12 +33,25 @@ export function QuizScreen() {
   const submitQuiz = useAppStore((s) => s.submitQuiz);
   const resetQuiz = useAppStore((s) => s.resetQuiz);
   const quizComplete = useAppStore((s) => s.quizComplete);
+  const quizQuestionIds = useAppStore((s) => s.quizQuestionIds);
+  const startQuiz = useAppStore((s) => s.startQuiz);
 
   const [phase, setPhase] = useState<Phase>("configure");
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
-  const questions = useMemo(() => diagnosticQuestionsForTopics(quizTopicIds), [quizTopicIds]);
+  // The question set is drawn once when the quiz starts and saved in the
+  // store, so it stays the same across Back/Next, reloads and devices.
+  const questions = useMemo(
+    () => quizQuestionIds.map((id) => QUESTION_MAP[id]).filter(Boolean),
+    [quizQuestionIds],
+  );
+  const inProgress =
+    !quizComplete &&
+    questions.length > 0 &&
+    quizAnswers.length > 0 &&
+    questions.every((q) => quizTopicIds.includes(q.topicId)) &&
+    quizTopicIds.every((id) => questions.some((q) => q.topicId === id));
   const total = questions.length;
   const answeredCount = quizAnswers.length;
   const progressPct = total === 0 ? 0 : Math.round((answeredCount / total) * 100);
@@ -51,6 +65,7 @@ export function QuizScreen() {
 
   function begin() {
     if (quizTopicIds.length === 0) return;
+    if (!inProgress) startQuiz();
     setPhase("running");
     setCurrentIdx(0);
   }
@@ -103,7 +118,8 @@ export function QuizScreen() {
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
             Select the topics to be quizzed on. All six are pre-selected. You can
             deselect any, but at least one must remain. Each topic gets three
-            multiple-choice questions.
+            questions drawn at random from a 10-question pool - one easy, one
+            medium and one hard - so a retake is a different quiz.
           </p>
 
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
@@ -140,7 +156,7 @@ export function QuizScreen() {
                         {t.blurb}
                       </p>
                       <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        3 questions - ~90s
+                        3 of 10 questions - ~90s
                       </p>
                     </div>
                     <div
@@ -174,7 +190,7 @@ export function QuizScreen() {
               disabled={quizTopicIds.length === 0}
               className="bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 text-white shadow-lg shadow-fuchsia-500/30 border-0"
             >
-              Begin quiz
+              {inProgress ? "Resume quiz" : quizComplete ? "Retake with new questions" : "Begin quiz"}
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
@@ -183,8 +199,8 @@ export function QuizScreen() {
             <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
-                You've already submitted a diagnostic. Retaking will overwrite
-                your previous scores.
+                You've already submitted a diagnostic. A retake draws a new set of
+                questions and overwrites your previous scores when you submit.
               </p>
               <Button
                 onClick={() => {
@@ -309,6 +325,7 @@ export function QuizScreen() {
             </p>
             <p className="text-sm font-semibold">{topic.name}</p>
           </div>
+          <DifficultyBadge level={current.difficulty} className="ml-auto" />
         </div>
 
         <AnimatePresence mode="wait">

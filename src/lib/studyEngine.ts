@@ -7,8 +7,20 @@ export function classify(score: number): MasteryClass {
   return "needs-work";
 }
 
-export function scoreQuiz(answers: QuizAnswer[]): QuizResult[] {
+/**
+ * Scores a diagnostic per topic. When the list of asked question ids is
+ * given, unanswered questions count as wrong (as the submit dialog says).
+ */
+export function scoreQuiz(answers: QuizAnswer[], askedQuestionIds: string[] = []): QuizResult[] {
   const byTopic = new Map<string, { correct: number; total: number }>();
+  const answeredIds = new Set(answers.map((a) => a.questionId));
+  for (const id of askedQuestionIds) {
+    const q = QUESTIONS.find((x) => x.id === id);
+    if (!q || answeredIds.has(id)) continue;
+    const bucket = byTopic.get(q.topicId) ?? { correct: 0, total: 0 };
+    bucket.total += 1;
+    byTopic.set(q.topicId, bucket);
+  }
   for (const a of answers) {
     const q = QUESTIONS.find((x) => x.id === a.questionId);
     const isCorrect = q ? q.correctOptionId === a.selectedOptionId : false;

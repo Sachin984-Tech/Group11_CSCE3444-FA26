@@ -188,7 +188,7 @@ export function DashboardScreen() {
                   <div>
                     <h2 className="text-lg font-semibold">Take the diagnostic</h2>
                     <p className="text-sm text-muted-foreground">
-                      Six DSA topics - three questions each - 18 questions total.
+                      Six DSA topics - three random questions each from a 60-question bank - 18 total.
                       About 12 minutes.
                     </p>
                   </div>

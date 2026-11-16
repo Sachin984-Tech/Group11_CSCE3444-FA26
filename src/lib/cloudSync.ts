@@ -17,6 +17,7 @@ import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, TopicId, Us
 
 export interface ProgressSnapshot {
   quizTopicIds: TopicId[];
+  quizQuestionIds?: string[];
   quizAnswers: QuizAnswer[];
   quizComplete: boolean;
   quizResults: QuizResult[];

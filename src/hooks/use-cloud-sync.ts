@@ -70,6 +70,7 @@ export function useCloudSync() {
         state.quizResults !== prev.quizResults ||
         state.quizComplete !== prev.quizComplete ||
         state.quizTopicIds !== prev.quizTopicIds ||
+        state.quizQuestionIds !== prev.quizQuestionIds ||
         state.masteryByTopic !== prev.masteryByTopic ||
         state.attempts !== prev.attempts ||
         state.practicedQuestionIds !== prev.practicedQuestionIds;

@@ -19,6 +19,7 @@ import { TiltCard } from "@/components/tilt-card";
 import { Button } from "@/components/ui/button";
 import { AuroraBg } from "@/components/aurora-bg";
 import type { PracticeAttempt } from "@/lib/types";
+import { DifficultyBadge } from "@/components/difficulty-badge";
 
 const accentRing: Record<string, string> = {
   emerald: "ring-emerald-400/40",
@@ -259,6 +260,7 @@ export function PracticeScreen() {
                   <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     {topic.name} · practice
                   </span>
+                  <DifficultyBadge level={currentQuestion.difficulty} className="ml-auto" />
                 </div>
                 <h2 className="text-lg sm:text-xl font-semibold leading-snug">
                   {currentQuestion.prompt}

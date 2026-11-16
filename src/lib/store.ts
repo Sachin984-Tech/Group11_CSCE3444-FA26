@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { TOPICS } from "./questionBank";
+import { TOPICS, buildDiagnostic } from "./questionBank";
 import { classify, masteryFromQuiz, recomputeMasteryWithAttempts, scoreQuiz } from "./studyEngine";
 import type { ProgressSnapshot } from "./cloudSync";
 import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
@@ -14,6 +14,7 @@ interface AppState {
   syncStatus: SyncStatus;
   screen: Screen;
   quizTopicIds: TopicId[];
+  quizQuestionIds: string[];
   quizAnswers: QuizAnswer[];
   quizComplete: boolean;
   quizResults: QuizResult[];
@@ -28,6 +29,7 @@ interface AppState {
   logout: () => void;
   go: (screen: Screen) => void;
   setQuizTopics: (ids: TopicId[]) => void;
+  startQuiz: () => void;
   recordQuizAnswer: (q: QuizAnswer) => void;
   submitQuiz: () => void;
   resetQuiz: () => void;
@@ -38,6 +40,7 @@ interface AppState {
 
 const EMPTY_PROGRESS = {
   quizTopicIds: TOPICS.map((t) => t.id),
+  quizQuestionIds: [] as string[],
   quizAnswers: [] as QuizAnswer[],
   quizComplete: false,
   quizResults: [] as QuizResult[],
@@ -54,6 +57,7 @@ export const useAppStore = create<AppState>()(
       syncStatus: "local",
       screen: "landing",
       quizTopicIds: TOPICS.map((t) => t.id),
+      quizQuestionIds: [],
       quizAnswers: [],
       quizComplete: false,
       quizResults: [],
@@ -77,6 +81,7 @@ export const useAppStore = create<AppState>()(
       applyProgress: (p) =>
         set({
           quizTopicIds: p.quizTopicIds?.length ? p.quizTopicIds : TOPICS.map((t) => t.id),
+          quizQuestionIds: p.quizQuestionIds ?? [],
           quizAnswers: p.quizAnswers ?? [],
           quizComplete: Boolean(p.quizComplete),
           quizResults: p.quizResults ?? [],
@@ -94,6 +99,13 @@ export const useAppStore = create<AppState>()(
           quizTopicIds: ids.length === 0 ? TOPICS.map((t) => t.id) : ids,
         }),
 
+      // Draw a new random question set and start a fresh attempt.
+      startQuiz: () =>
+        set((s) => ({
+          quizQuestionIds: buildDiagnostic(s.quizTopicIds).map((q) => q.id),
+          quizAnswers: [],
+        })),
+
       recordQuizAnswer: (q) =>
         set((s) => {
           const others = s.quizAnswers.filter((a) => a.questionId !== q.questionId);
@@ -102,7 +114,7 @@ export const useAppStore = create<AppState>()(
 
       submitQuiz: () => {
         set((s) => {
-          const results = scoreQuiz(s.quizAnswers);
+          const results = scoreQuiz(s.quizAnswers, s.quizQuestionIds);
           const mastery = masteryFromQuiz(results);
           const nextMastery = new Map<TopicId, MasteryScore>(s.masteryByTopic);
           for (const m of mastery) nextMastery.set(m.topicId, m);
@@ -117,6 +129,7 @@ export const useAppStore = create<AppState>()(
 
       resetQuiz: () =>
         set({
+          quizQuestionIds: [],
           quizAnswers: [],
           quizComplete: false,
           quizResults: [],
@@ -157,6 +170,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         user: s.user,
         quizTopicIds: s.quizTopicIds,
+        quizQuestionIds: s.quizQuestionIds,
         quizAnswers: s.quizAnswers,
         quizComplete: s.quizComplete,
         quizResults: s.quizResults,
@@ -196,6 +210,7 @@ export { classify };
 export function progressSnapshot(s: AppState): ProgressSnapshot {
   return {
     quizTopicIds: s.quizTopicIds,
+    quizQuestionIds: s.quizQuestionIds,
     quizAnswers: s.quizAnswers,
     quizComplete: s.quizComplete,
     quizResults: s.quizResults,

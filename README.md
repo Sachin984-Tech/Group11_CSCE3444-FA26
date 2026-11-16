@@ -1,22 +1,21 @@
 # Adaptive Study Path Engine - Release 1.1
 
-**Commit 2 of 6 (Release 1.1) - F-07 (2/2): Cloud Firestore progress sync**
+**Commit 3 of 6 (Release 1.1) - F-08: Expanded & randomized diagnostic**
 
 Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds cloud accounts and new study features.
 
 ## What's new in this commit
 
-- Progress (quiz results, mastery, practice attempts) saved to **Cloud Firestore** per user (`src/lib/cloudSync.ts`)
-- Loaded back on sign-in, so progress follows the student to any device
-- Every diagnostic submission also written to `users/{uid}/diagnosticQuizzes`
-- Debounced auto-save (well inside the 2-second NFR-R2 target) with a live *Saving / Saved / Offline* indicator in the header
-- `firestore.rules`: each user can only read and write their own documents (NFR-S4)
+- Question bank expanded from 25 to **60 questions** (10 per topic), each with a plain-English explanation and a difficulty tag
+- Each diagnostic draws a **random 3 questions per topic** (one easy, one medium, one hard where possible), so a retake is a different quiz
+- The question set is locked in when the quiz starts, so it doesn't change mid-quiz or on reload
+- Practice has a deeper pool per topic, so questions repeat less
 
 ## Release 1.1 progress
 
 - [x] Commit 1: F-07 (1/2): Firebase Authentication
 - [x] Commit 2: F-07 (2/2): Cloud Firestore progress sync
-- [ ] Commit 3: F-08: Expanded & randomized diagnostic
+- [x] Commit 3: F-08: Expanded & randomized diagnostic
 - [ ] Commit 4: F-09: Answer review & mistake notebook
 - [ ] Commit 5: F-10: Study history & progress trend
 - [ ] Commit 6: F-11: Smart recommendations (FR-05 v2)

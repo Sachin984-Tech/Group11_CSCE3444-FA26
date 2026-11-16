@@ -42,7 +42,7 @@ const FEATURES = [
   {
     icon: Target,
     title: "Diagnostic Quiz",
-    desc: "Six DSA topics, three questions each. Pinpoint what you actually know in fifteen minutes.",
+    desc: "Six DSA topics, three random questions each from a 60-question bank. Pinpoint what you know in fifteen minutes.",
     color: "from-fuchsia-400/30 to-fuchsia-500/10",
     ring: "ring-fuchsia-400/30",
     status: "Live now",
