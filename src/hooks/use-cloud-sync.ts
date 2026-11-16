@@ -73,7 +73,8 @@ export function useCloudSync() {
         state.quizQuestionIds !== prev.quizQuestionIds ||
         state.masteryByTopic !== prev.masteryByTopic ||
         state.attempts !== prev.attempts ||
-        state.practicedQuestionIds !== prev.practicedQuestionIds;
+        state.practicedQuestionIds !== prev.practicedQuestionIds ||
+        state.history !== prev.history;
       if (!changed) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => void save(), SAVE_DEBOUNCE_MS);

@@ -1,15 +1,16 @@
 # Adaptive Study Path Engine - Release 1.1
 
-**Commit 4 of 6 (Release 1.1) - F-09: Answer review & mistake notebook**
+**Commit 5 of 6 (Release 1.1) - F-10: Study history & progress trend**
 
 Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds cloud accounts and new study features.
 
 ## What's new in this commit
 
-- New **Review** screen (in the nav, plus a *Review answers* button on the study path)
-- *Diagnostic review*: every question with your answer, the correct answer, and the explanation; filter to wrong answers only
-- *Mistake notebook*: every practice question you got wrong, with when it happened and a **Retry** button that reopens that exact question
-- Questions you later get right are marked *Fixed*
+- New **History** screen
+- Line chart of average mastery over time, with a per-topic toggle and an accessible table view
+- Session timeline: diagnostics taken and practice sessions grouped by topic and day
+- Stats: total questions answered, accuracy, study days, and current day streak
+- Snapshots recorded after every diagnostic and practice answer, synced to Firestore
 
 ## Release 1.1 progress
 
@@ -17,7 +18,7 @@ Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds clou
 - [x] Commit 2: F-07 (2/2): Cloud Firestore progress sync
 - [x] Commit 3: F-08: Expanded & randomized diagnostic
 - [x] Commit 4: F-09: Answer review & mistake notebook
-- [ ] Commit 5: F-10: Study history & progress trend
+- [x] Commit 5: F-10: Study history & progress trend
 - [ ] Commit 6: F-11: Smart recommendations (FR-05 v2)
 
 ## Release 1.0 features (done)

@@ -2,7 +2,7 @@
 
 import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { getDb } from "./firebase";
-import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, TopicId, User } from "./types";
+import type { HistoryEntry, MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, TopicId, User } from "./types";
 
 /**
  * Cloud Firestore persistence for a student's progress.
@@ -24,6 +24,7 @@ export interface ProgressSnapshot {
   mastery: MasteryScore[];
   attempts: PracticeAttempt[];
   practicedQuestionIds: string[];
+  history?: HistoryEntry[];
 }
 
 /** Firestore rejects `undefined`, so strip it by round-tripping through JSON. */

@@ -5,7 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { TOPICS, buildDiagnostic } from "./questionBank";
 import { classify, masteryFromQuiz, recomputeMasteryWithAttempts, scoreQuiz } from "./studyEngine";
 import type { ProgressSnapshot } from "./cloudSync";
-import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
+import type { HistoryEntry, MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
 
 export type SyncStatus = "local" | "loading" | "saving" | "saved" | "offline";
 
@@ -24,6 +24,7 @@ interface AppState {
   /** A specific question to open in practice (Retry from the mistake notebook). */
   practiceQuestionId: string | null;
   practicedQuestionIds: string[];
+  history: HistoryEntry[];
 
   login: (user: User) => void;
   setSyncStatus: (status: SyncStatus) => void;
@@ -51,6 +52,7 @@ const EMPTY_PROGRESS = {
   practiceTopicId: null as TopicId | null,
   practiceQuestionId: null as string | null,
   practicedQuestionIds: [] as string[],
+  history: [] as HistoryEntry[],
 };
 
 export const useAppStore = create<AppState>()(
@@ -69,6 +71,7 @@ export const useAppStore = create<AppState>()(
       practiceTopicId: null,
       practiceQuestionId: null,
       practicedQuestionIds: [],
+      history: [],
 
       login: (user) =>
         set((s) => {
@@ -92,6 +95,7 @@ export const useAppStore = create<AppState>()(
           masteryByTopic: new Map<TopicId, MasteryScore>((p.mastery ?? []).map((m) => [m.topicId, m])),
           attempts: p.attempts ?? [],
           practicedQuestionIds: p.practicedQuestionIds ?? [],
+          history: p.history ?? [],
         }),
 
       logout: () => set({ ...EMPTY_PROGRESS, user: null, screen: "landing", syncStatus: "local" }),
@@ -126,6 +130,11 @@ export const useAppStore = create<AppState>()(
             quizResults: results,
             quizComplete: true,
             masteryByTopic: nextMastery,
+            history: appendHistory(
+              s.history,
+              { kind: "diagnostic", questions: s.quizQuestionIds.length || s.quizAnswers.length },
+              nextMastery,
+            ),
             screen: "study-path" as Screen,
           };
         });
@@ -153,6 +162,11 @@ export const useAppStore = create<AppState>()(
           return {
             attempts: nextAttempts,
             masteryByTopic: nextMastery,
+            history: appendHistory(
+              s.history,
+              { kind: "practice", topicId: attempt.topicId, correct: attempt.correct },
+              nextMastery,
+            ),
             practicedQuestionIds: [...s.practicedQuestionIds, attempt.questionId],
           };
         }),
@@ -181,6 +195,7 @@ export const useAppStore = create<AppState>()(
         masteryByTopic: Array.from(s.masteryByTopic.entries()),
         attempts: s.attempts,
         practicedQuestionIds: s.practicedQuestionIds,
+        history: s.history,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<AppState> & {
@@ -221,5 +236,23 @@ export function progressSnapshot(s: AppState): ProgressSnapshot {
     mastery: Array.from(s.masteryByTopic.values()),
     attempts: s.attempts,
     practicedQuestionIds: s.practicedQuestionIds,
+    history: s.history,
   };
+}
+
+const HISTORY_LIMIT = 1000;
+
+function appendHistory(
+  history: HistoryEntry[],
+  event: Pick<HistoryEntry, "kind" | "topicId" | "correct" | "questions">,
+  mastery: Map<TopicId, MasteryScore>,
+): HistoryEntry[] {
+  const scores = Array.from(mastery.values());
+  const entry: HistoryEntry = {
+    ...event,
+    timestamp: Date.now(),
+    average: scores.length === 0 ? 0 : Math.round(scores.reduce((sum, m) => sum + m.score, 0) / scores.length),
+    mastery: Object.fromEntries(scores.map((m) => [m.topicId, m.score])),
+  };
+  return [...history, entry].slice(-HISTORY_LIMIT);
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Brain, ClipboardCheck, Cloud, CloudOff, Compass, HardDrive, Home, Loader2, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
-import { useCallback } from "react";
+import { BarChart3, Brain, ClipboardCheck, History, Cloud, CloudOff, Compass, HardDrive, Home, Loader2, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { useCallback, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import type { Screen } from "@/lib/types";
@@ -18,6 +18,7 @@ const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
   { id: "practice", label: "Practice", icon: PlayCircle },
   { id: "progress", label: "Progress", icon: BarChart3 },
   { id: "review", label: "Review", icon: ClipboardCheck },
+  { id: "history", label: "History", icon: History },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const syncStatus = useAppStore((s) => s.syncStatus);
 
   useCloudSync();
+
+  // Start each screen at the top instead of keeping the old scroll position.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [screen]);
 
   const initial = (user?.displayName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
 
@@ -66,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Brain className="h-5 w-5 text-white" />
             </motion.div>
             <div className="text-left">
-              <p className="text-sm font-semibold leading-tight">
+              <p className="text-sm font-semibold leading-tight whitespace-nowrap">
                 Adaptive Study Path
               </p>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -75,7 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </button>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" aria-label="Main">
             {NAV.map((item) => {
               const Icon = item.icon;
               const active = screen === item.id;
@@ -84,15 +90,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.id}
                   onClick={() => go(item.id)}
                   aria-current={active ? "page" : undefined}
-                  className={`relative px-2.5 lg:px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                  aria-label={item.label}
+                  title={item.label}
+                  className={`relative px-2.5 xl:px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     active
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <span className="relative z-10 flex items-center gap-1.5">
-                    <Icon className="h-3.5 w-3.5" />
-                    {item.label}
+                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="hidden xl:inline">{item.label}</span>
                   </span>
                   {active ? (
                     <motion.span
@@ -112,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center text-white text-sm font-semibold shadow-md shadow-fuchsia-500/30">
                 {initial}
               </div>
-              <div className="hidden xl:block">
+              <div className="hidden 2xl:block">
                 <p className="text-xs font-semibold leading-tight truncate max-w-[12rem]">
                   {user?.displayName || "Learner"}
                 </p>
@@ -145,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto scrollbar-thin">
+        <nav aria-label="Main" className="lg:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto scrollbar-thin">
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = screen === item.id;
@@ -209,10 +217,11 @@ function SyncBadge({ status }: { status: string }) {
     <span
       role="status"
       aria-live="polite"
-      className={`hidden 2xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] ${item.tone}`}
+      title={item.label}
+      className={`hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] ${item.tone}`}
     >
       <Icon className={`h-3 w-3 ${item.spin ? "animate-spin" : ""}`} aria-hidden="true" />
-      {item.label}
+      <span className="sr-only 2xl:not-sr-only">{item.label}</span>
     </span>
   );
 }

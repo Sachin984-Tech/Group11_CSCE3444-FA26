@@ -71,7 +71,7 @@ export interface PracticeAttempt {
   timestamp: number;
 }
 
-export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress" | "review";
+export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress" | "review" | "history";
 
 export interface User {
   uid: string;
@@ -79,4 +79,19 @@ export interface User {
   displayName: string;
   createdAt: number;
   provider: "firebase" | "local";
+}
+
+/** One point on the study timeline, recorded after a diagnostic or a practice answer. */
+export interface HistoryEntry {
+  timestamp: number;
+  kind: "diagnostic" | "practice";
+  /** Practice only: which topic was practiced and whether the answer was right. */
+  topicId?: TopicId;
+  correct?: boolean;
+  /** Diagnostic only: how many questions the quiz had. */
+  questions?: number;
+  /** Average mastery across topics with data, right after this event. */
+  average: number;
+  /** Mastery score per topic right after this event. */
+  mastery: Partial<Record<TopicId, number>>;
 }
