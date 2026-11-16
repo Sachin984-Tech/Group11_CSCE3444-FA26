@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { recordDiagnosticSubmission } from "@/lib/cloudSync";
 import { TOPICS, TOPIC_MAP, diagnosticQuestionsForTopics } from "@/lib/questionBank";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -75,6 +76,11 @@ export function QuizScreen() {
     setPhase("submitting");
     setTimeout(() => {
       submitQuiz();
+      // Keep a permanent copy of this attempt in Firestore (diagnosticQuizzes).
+      const { user, quizAnswers: answers, quizResults } = useAppStore.getState();
+      if (user?.provider === "firebase") {
+        void recordDiagnosticSubmission(user.uid, answers, quizResults).catch(() => {});
+      }
     }, 1100);
   }
 

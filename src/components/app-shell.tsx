@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Brain, Cloud, Compass, HardDrive, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { BarChart3, Brain, Cloud, CloudOff, Compass, HardDrive, Home, Loader2, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import type { Screen } from "@/lib/types";
 import { signOutAccount } from "@/lib/auth";
 import { useIdleLogout } from "@/hooks/use-idle-logout";
+import { useCloudSync } from "@/hooks/use-cloud-sync";
 import { toast } from "@/hooks/use-toast";
 
 const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
@@ -23,6 +24,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const screen = useAppStore((s) => s.screen);
   const go = useAppStore((s) => s.go);
   const logout = useAppStore((s) => s.logout);
+  const syncStatus = useAppStore((s) => s.syncStatus);
+
+  useCloudSync();
 
   const initial = (user?.displayName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
 
@@ -101,6 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-3">
+            <SyncBadge status={user?.provider === "firebase" ? syncStatus : "local"} />
             <div className="hidden sm:flex items-center gap-2.5 pr-2 border-r border-border/50">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center text-white text-sm font-semibold shadow-md shadow-fuchsia-500/30">
                 {initial}
@@ -180,10 +185,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 to FR-06 + Firebase accounts - Release 1.1
+            FR-01 to FR-06 + Firebase cloud sync - Release 1.1
           </p>
         </div>
       </footer>
     </div>
+  );
+}
+
+function SyncBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; tone: string; icon: typeof Cloud; spin?: boolean }> = {
+    local: { label: "Saved on this device", tone: "text-amber-300 border-amber-400/30", icon: HardDrive },
+    loading: { label: "Loading from cloud", tone: "text-violet-200 border-violet-400/30", icon: Loader2, spin: true },
+    saving: { label: "Saving", tone: "text-violet-200 border-violet-400/30", icon: Loader2, spin: true },
+    saved: { label: "Saved to cloud", tone: "text-emerald-300 border-emerald-400/30", icon: Cloud },
+    offline: { label: "Cloud offline", tone: "text-rose-300 border-rose-400/30", icon: CloudOff },
+  };
+  const item = map[status] ?? map.local;
+  const Icon = item.icon;
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className={`hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] ${item.tone}`}
+    >
+      <Icon className={`h-3 w-3 ${item.spin ? "animate-spin" : ""}`} aria-hidden="true" />
+      {item.label}
+    </span>
   );
 }

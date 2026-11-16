@@ -1,24 +1,21 @@
 # Adaptive Study Path Engine - Release 1.1
 
-**Commit 1 of 6 (Release 1.1) - F-07 (1/2): Firebase Authentication**
+**Commit 2 of 6 (Release 1.1) - F-07 (2/2): Cloud Firestore progress sync**
 
 Release 1.0 (FR-01 to FR-06) shipped for Project Status 1. Release 1.1 adds cloud accounts and new study features.
 
 ## What's new in this commit
 
-- Real email + password accounts through **Firebase Authentication** (`src/lib/firebase.ts`, `src/lib/auth.ts`)
-- Register, sign in, and **Forgot password** reset-by-email flow on the landing card
-- Firebase error codes mapped to plain-English messages (wrong password, email in use, too many attempts, network)
-- Session restored after reload with `onAuthStateChanged`; a different account on the same browser starts clean
-- **30-minute idle auto sign-out** (NFR-S3) via `useIdleLogout`, shared across tabs
-- Header shows whether you're on a Firebase account or local demo account
-- Falls back to local demo mode when Firebase keys are missing, so the deployment never breaks
-- Added `.gitignore` and `.env.example`
+- Progress (quiz results, mastery, practice attempts) saved to **Cloud Firestore** per user (`src/lib/cloudSync.ts`)
+- Loaded back on sign-in, so progress follows the student to any device
+- Every diagnostic submission also written to `users/{uid}/diagnosticQuizzes`
+- Debounced auto-save (well inside the 2-second NFR-R2 target) with a live *Saving / Saved / Offline* indicator in the header
+- `firestore.rules`: each user can only read and write their own documents (NFR-S4)
 
 ## Release 1.1 progress
 
 - [x] Commit 1: F-07 (1/2): Firebase Authentication
-- [ ] Commit 2: F-07 (2/2): Cloud Firestore progress sync
+- [x] Commit 2: F-07 (2/2): Cloud Firestore progress sync
 - [ ] Commit 3: F-08: Expanded & randomized diagnostic
 - [ ] Commit 4: F-09: Answer review & mistake notebook
 - [ ] Commit 5: F-10: Study history & progress trend

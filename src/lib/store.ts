@@ -4,10 +4,14 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { TOPICS } from "./questionBank";
 import { classify, masteryFromQuiz, recomputeMasteryWithAttempts, scoreQuiz } from "./studyEngine";
+import type { ProgressSnapshot } from "./cloudSync";
 import type { MasteryScore, PracticeAttempt, QuizAnswer, QuizResult, Screen, TopicId, User } from "./types";
+
+export type SyncStatus = "local" | "loading" | "saving" | "saved" | "offline";
 
 interface AppState {
   user: User | null;
+  syncStatus: SyncStatus;
   screen: Screen;
   quizTopicIds: TopicId[];
   quizAnswers: QuizAnswer[];
@@ -19,6 +23,8 @@ interface AppState {
   practicedQuestionIds: string[];
 
   login: (user: User) => void;
+  setSyncStatus: (status: SyncStatus) => void;
+  applyProgress: (p: ProgressSnapshot) => void;
   logout: () => void;
   go: (screen: Screen) => void;
   setQuizTopics: (ids: TopicId[]) => void;
@@ -45,6 +51,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       user: null,
+      syncStatus: "local",
       screen: "landing",
       quizTopicIds: TOPICS.map((t) => t.id),
       quizAnswers: [],
@@ -65,7 +72,20 @@ export const useAppStore = create<AppState>()(
           return { user, screen: "dashboard" as Screen };
         }),
 
-      logout: () => set({ ...EMPTY_PROGRESS, user: null, screen: "landing" }),
+      setSyncStatus: (syncStatus) => set({ syncStatus }),
+
+      applyProgress: (p) =>
+        set({
+          quizTopicIds: p.quizTopicIds?.length ? p.quizTopicIds : TOPICS.map((t) => t.id),
+          quizAnswers: p.quizAnswers ?? [],
+          quizComplete: Boolean(p.quizComplete),
+          quizResults: p.quizResults ?? [],
+          masteryByTopic: new Map<TopicId, MasteryScore>((p.mastery ?? []).map((m) => [m.topicId, m])),
+          attempts: p.attempts ?? [],
+          practicedQuestionIds: p.practicedQuestionIds ?? [],
+        }),
+
+      logout: () => set({ ...EMPTY_PROGRESS, user: null, screen: "landing", syncStatus: "local" }),
 
       go: (screen) => set({ screen }),
 
@@ -154,7 +174,8 @@ export const useAppStore = create<AppState>()(
           masteryByTopic: p.masteryByTopic
             ? new Map<TopicId, MasteryScore>(p.masteryByTopic)
             : current.masteryByTopic,
-          screen: "landing",
+          // Signed-in users land on the dashboard after a reload.
+          screen: p.user ? "dashboard" : "landing",
         } as AppState;
       },
       skipHydration: true,
@@ -170,3 +191,16 @@ if (typeof window !== "undefined") {
 }
 
 export { classify };
+
+/** The part of the state that is saved to Cloud Firestore. */
+export function progressSnapshot(s: AppState): ProgressSnapshot {
+  return {
+    quizTopicIds: s.quizTopicIds,
+    quizAnswers: s.quizAnswers,
+    quizComplete: s.quizComplete,
+    quizResults: s.quizResults,
+    mastery: Array.from(s.masteryByTopic.values()),
+    attempts: s.attempts,
+    practicedQuestionIds: s.practicedQuestionIds,
+  };
+}
