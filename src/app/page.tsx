@@ -1,8 +1,9 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAppStore } from "@/lib/store";
+import { authMode, watchSession } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { LandingScreen } from "@/components/screens/landing";
 import { DashboardScreen } from "@/components/screens/dashboard";
@@ -23,8 +24,27 @@ export default function Home() {
   const hydrated = useHydrated();
   const user = useAppStore((s) => s.user);
   const screen = useAppStore((s) => s.screen);
+  const login = useAppStore((s) => s.login);
+  const logout = useAppStore((s) => s.logout);
+  // In local demo mode there is no remote session to wait for.
+  const [sessionChecked, setSessionChecked] = useState(authMode === "local");
 
-  if (!hydrated) {
+  // Keep the app in sync with the Firebase session: restores a signed-in
+  // user after reload and signs out locally if the session ended elsewhere.
+  useEffect(() => {
+    if (authMode !== "firebase") return;
+    return watchSession((sessionUser) => {
+      const current = useAppStore.getState().user;
+      if (sessionUser) {
+        if (!current || current.uid !== sessionUser.uid) login(sessionUser);
+      } else if (current) {
+        logout();
+      }
+      setSessionChecked(true);
+    });
+  }, [login, logout]);
+
+  if (!hydrated || !sessionChecked) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"

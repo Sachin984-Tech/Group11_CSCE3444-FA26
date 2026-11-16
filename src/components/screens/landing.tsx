@@ -5,8 +5,10 @@ import {
   ArrowRight,
   BarChart3,
   Brain,
-  CheckCircle2,
   ChevronRight,
+  Cloud,
+  HardDrive,
+  KeyRound,
   Layers,
   Loader2,
   Lock,
@@ -19,19 +21,20 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { authMode, friendlyAuthError, registerAccount, sendResetEmail, signInAccount } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuroraBg } from "@/components/aurora-bg";
 import { TiltCard } from "@/components/tilt-card";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "reset";
 
 const FEATURES = [
   {
     icon: UserIcon,
     title: "Login & Account Access",
-    desc: "Email + password registration and login with validation. Account state persists locally between sessions.",
+    desc: "Email + password accounts through Firebase Authentication, password reset by email, and 30-minute idle sign-out.",
     color: "from-emerald-400/30 to-emerald-500/10",
     ring: "ring-emerald-400/30",
     status: "Live now",
@@ -42,7 +45,7 @@ const FEATURES = [
     desc: "Six DSA topics, three questions each. Pinpoint what you actually know in fifteen minutes.",
     color: "from-fuchsia-400/30 to-fuchsia-500/10",
     ring: "ring-fuchsia-400/30",
-    status: "FR-02 · planned",
+    status: "Live now",
   },
   {
     icon: Layers,
@@ -50,7 +53,7 @@ const FEATURES = [
     desc: "Weakest topics first. Prerequisites pulled ahead of dependents. Recalculated after every answer.",
     color: "from-violet-400/30 to-violet-500/10",
     ring: "ring-violet-400/30",
-    status: "FR-03 · planned",
+    status: "Live now",
   },
   {
     icon: Brain,
@@ -58,7 +61,7 @@ const FEATURES = [
     desc: "Every ranking ships with a plain-English explanation tied to your scores and the prerequisite graph.",
     color: "from-violet-400/30 to-violet-500/10",
     ring: "ring-violet-400/30",
-    status: "FR-05 · planned",
+    status: "Live now",
   },
   {
     icon: BarChart3,
@@ -66,7 +69,7 @@ const FEATURES = [
     desc: "Bar chart per topic with mastery bands - Needs Work, Developing, Mastered - and a screen-reader table.",
     color: "from-amber-400/30 to-amber-500/10",
     ring: "ring-amber-400/30",
-    status: "FR-06 · planned",
+    status: "Live now",
   },
 ];
 
@@ -79,12 +82,26 @@ export function LandingScreen() {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("That email doesn't look right. Try again.");
+      return;
+    }
+    if (mode === "reset") {
+      setBusy(true);
+      try {
+        await sendResetEmail(email.trim());
+        setNotice(`If an account exists for ${email.trim()}, a reset link is on its way. Check your inbox (and spam).`);
+      } catch (err) {
+        setError(friendlyAuthError(err));
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     if (password.length < 8) {
@@ -102,10 +119,22 @@ export function LandingScreen() {
       }
     }
     setBusy(true);
-    setTimeout(() => {
-      const display = mode === "register" ? name.trim() : email.split("@")[0];
-      login(email, display);
-    }, 900);
+    try {
+      const user =
+        mode === "register"
+          ? await registerAccount(email.trim(), password, name.trim())
+          : await signInAccount(email.trim(), password);
+      login(user);
+    } catch (err) {
+      setError(friendlyAuthError(err));
+      setBusy(false);
+    }
+  }
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    setError(null);
+    setNotice(null);
   }
 
   function fillDemo() {
@@ -113,8 +142,7 @@ export function LandingScreen() {
     setPassword("csci-rocks");
     setConfirm("csci-rocks");
     setName("Sachin B");
-    setMode("register");
-    setError(null);
+    switchMode("register");
   }
 
   return (
@@ -154,7 +182,7 @@ export function LandingScreen() {
               className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium glass-strong border border-fuchsia-400/30 text-fuchsia-200"
             >
               <Sparkles className="h-3 w-3" />
-              FR-01 live - account access is ready · Release 0.1
+              Release 1.1 - Firebase accounts + cloud-ready
             </motion.span>
 
             <motion.h1
@@ -176,10 +204,9 @@ export function LandingScreen() {
               transition={{ delay: 0.3 }}
               className="mt-6 max-w-xl text-base sm:text-lg text-muted-foreground leading-relaxed"
             >
-              The Adaptive Study Path Engine is being built one functional
-              requirement at a time. FR-01 - account access - is live today.
-              The diagnostic quiz, study path, and progress chart land in
-              upcoming commits.
+              Take a short diagnostic quiz on six DSA topics, get a study path
+              ranked weakest-first, and watch it rerank as you practice. Your
+              account is secured by Firebase Authentication.
             </motion.p>
 
             <motion.div
@@ -267,28 +294,37 @@ export function LandingScreen() {
             >
               <div className="glass-strong rounded-3xl p-7 sm:p-9 shadow-2xl shadow-fuchsia-500/10 border border-border/40">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Zap className="h-4 w-4 text-fuchsia-300" />
+                  {mode === "reset" ? (
+                    <KeyRound className="h-4 w-4 text-fuchsia-300" />
+                  ) : (
+                    <Zap className="h-4 w-4 text-fuchsia-300" />
+                  )}
                   <span className="text-[11px] uppercase tracking-[0.18em] text-fuchsia-200">
                     Sign in to begin
                   </span>
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight">
-                  {mode === "login" ? "Welcome back." : "Create your account."}
+                  {mode === "login"
+                    ? "Welcome back."
+                    : mode === "register"
+                      ? "Create your account."
+                      : "Reset your password."}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1.5">
                   {mode === "login"
                     ? "Pick up where you left off - your progress is saved."
-                    : "It takes about a minute. We don't ask for anything extra."}
+                    : mode === "register"
+                      ? "It takes about a minute. We don't ask for anything extra."
+                      : "Enter your account email and we'll send you a reset link."}
                 </p>
 
                 <div className="mt-5 grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted/40 border border-border/30">
                   {(["login", "register"] as Mode[]).map((m) => (
                     <button
                       key={m}
-                      onClick={() => {
-                        setMode(m);
-                        setError(null);
-                      }}
+                      type="button"
+                      aria-pressed={mode === m}
+                      onClick={() => switchMode(m)}
                       className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         mode === m
                           ? "text-foreground"
@@ -350,13 +386,25 @@ export function LandingScreen() {
                     </div>
                   </div>
 
+                  {mode !== "reset" ? (
                   <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="text-xs">
                       Password
                       <span className="text-muted-foreground/70 ml-1 normal-case">
                         (min 8 chars)
                       </span>
                     </Label>
+                    {mode === "login" ? (
+                      <button
+                        type="button"
+                        onClick={() => switchMode("reset")}
+                        className="text-[11px] text-fuchsia-200 hover:text-fuchsia-100 underline-offset-2 hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    ) : null}
+                    </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -370,6 +418,7 @@ export function LandingScreen() {
                       />
                     </div>
                   </div>
+                  ) : null}
 
                   <AnimatePresence>
                     {mode === "register" ? (
@@ -409,6 +458,15 @@ export function LandingScreen() {
                     ) : null}
                   </AnimatePresence>
 
+                  {notice ? (
+                    <p
+                      role="status"
+                      className="text-xs text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-3 py-2"
+                    >
+                      {notice}
+                    </p>
+                  ) : null}
+
                   <Button
                     type="submit"
                     disabled={busy}
@@ -419,17 +477,37 @@ export function LandingScreen() {
                     ) : (
                       <ChevronRight className="h-4 w-4 mr-1" />
                     )}
-                    {mode === "login" ? "Sign in" : "Create account"}
+                    {mode === "login" ? "Sign in" : mode === "register" ? "Create account" : "Send reset link"}
                     {busy ? " - working" : ""}
                   </Button>
+
+                  {mode === "reset" ? (
+                    <button
+                      type="button"
+                      onClick={() => switchMode("login")}
+                      className="w-full text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Back to sign in
+                    </button>
+                  ) : null}
                 </form>
 
-                <p className="text-[11px] text-muted-foreground/80 mt-5 text-center leading-relaxed">
-                  Demo mode - credentials stored locally in your browser.
-                  <br />
-                  <span className="text-muted-foreground/60">
-                    Firebase Auth integration pending in a later sprint.
-                  </span>
+                <p
+                  className={`text-[11px] mt-5 flex items-center justify-center gap-1.5 text-center leading-relaxed ${
+                    authMode === "firebase" ? "text-emerald-300/90" : "text-amber-300/90"
+                  }`}
+                >
+                  {authMode === "firebase" ? (
+                    <>
+                      <Cloud className="h-3 w-3" aria-hidden="true" />
+                      Secured by Firebase Authentication - passwords are never stored by this app.
+                    </>
+                  ) : (
+                    <>
+                      <HardDrive className="h-3 w-3" aria-hidden="true" />
+                      Local demo mode - Firebase keys not configured on this deployment.
+                    </>
+                  )}
                 </p>
 
                 <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-[11px] text-muted-foreground">

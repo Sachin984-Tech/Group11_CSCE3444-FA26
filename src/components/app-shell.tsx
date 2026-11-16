@@ -1,10 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, Brain, Compass, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { BarChart3, Brain, Cloud, Compass, HardDrive, Home, LogOut, PlayCircle, Route as RouteIcon } from "lucide-react";
+import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import type { Screen } from "@/lib/types";
+import { signOutAccount } from "@/lib/auth";
+import { useIdleLogout } from "@/hooks/use-idle-logout";
+import { toast } from "@/hooks/use-toast";
 
 const NAV: { id: Screen; label: string; icon: typeof Brain }[] = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -21,6 +25,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const logout = useAppStore((s) => s.logout);
 
   const initial = (user?.displayName?.[0] ?? user?.email?.[0] ?? "?").toUpperCase();
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOutAccount();
+    } finally {
+      logout();
+    }
+  }, [logout]);
+
+  // NFR-S3: end the session after 30 minutes without activity.
+  const handleIdle = useCallback(() => {
+    void handleSignOut();
+    toast({
+      title: "Signed out for inactivity",
+      description: "You were idle for 30 minutes. Sign in again to continue - your progress is saved.",
+    });
+  }, [handleSignOut]);
+  useIdleLogout(Boolean(user), handleIdle);
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -90,10 +112,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-muted-foreground truncate max-w-[12rem]">
                   {user?.email}
                 </p>
+                <p
+                  className={`mt-0.5 flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] ${
+                    user?.provider === "firebase" ? "text-emerald-300" : "text-amber-300"
+                  }`}
+                >
+                  {user?.provider === "firebase" ? (
+                    <Cloud className="h-2.5 w-2.5" aria-hidden="true" />
+                  ) : (
+                    <HardDrive className="h-2.5 w-2.5" aria-hidden="true" />
+                  )}
+                  {user?.provider === "firebase" ? "Firebase account" : "Local demo account"}
+                </p>
               </div>
             </div>
             <Button
-              onClick={logout}
+              onClick={handleSignOut}
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-rose-300"
@@ -146,7 +180,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Adaptive Study Path Engine - built by Group 11 - CSCE 3444 - Fall 2026
           </p>
           <p className="font-mono">
-            FR-01 through FR-06 complete - Release 1.0
+            FR-01 to FR-06 + Firebase accounts - Release 1.1
           </p>
         </div>
       </footer>

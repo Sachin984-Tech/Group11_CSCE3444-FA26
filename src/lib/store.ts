@@ -18,7 +18,7 @@ interface AppState {
   practiceTopicId: TopicId | null;
   practicedQuestionIds: string[];
 
-  login: (email: string, displayName: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   go: (screen: Screen) => void;
   setQuizTopics: (ids: TopicId[]) => void;
@@ -29,6 +29,17 @@ interface AppState {
   recordAttempt: (attempt: PracticeAttempt) => void;
   exitPractice: () => void;
 }
+
+const EMPTY_PROGRESS = {
+  quizTopicIds: TOPICS.map((t) => t.id),
+  quizAnswers: [] as QuizAnswer[],
+  quizComplete: false,
+  quizResults: [] as QuizResult[],
+  masteryByTopic: new Map<TopicId, MasteryScore>(),
+  attempts: [] as PracticeAttempt[],
+  practiceTopicId: null as TopicId | null,
+  practicedQuestionIds: [] as string[],
+};
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -44,21 +55,17 @@ export const useAppStore = create<AppState>()(
       practiceTopicId: null,
       practicedQuestionIds: [],
 
-      login: (email, displayName) =>
-        set({ user: { email, displayName, createdAt: Date.now() }, screen: "dashboard" }),
-
-      logout: () =>
-        set({
-          user: null,
-          screen: "landing",
-          quizAnswers: [],
-          quizComplete: false,
-          quizResults: [],
-          masteryByTopic: new Map<TopicId, MasteryScore>(),
-          attempts: [],
-          practiceTopicId: null,
-          practicedQuestionIds: [],
+      login: (user) =>
+        set((s) => {
+          // A different account signing in on this browser must not inherit
+          // the previous account's local progress.
+          if (s.user && s.user.uid !== user.uid) {
+            return { ...EMPTY_PROGRESS, user, screen: "dashboard" as Screen };
+          }
+          return { user, screen: "dashboard" as Screen };
         }),
+
+      logout: () => set({ ...EMPTY_PROGRESS, user: null, screen: "landing" }),
 
       go: (screen) => set({ screen }),
 
@@ -116,7 +123,7 @@ export const useAppStore = create<AppState>()(
       exitPractice: () => set({ practiceTopicId: null, screen: "study-path" }),
     }),
     {
-      name: "aspe-store-v5",
+      name: "aspe-store-v6",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {

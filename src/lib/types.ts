@@ -70,7 +70,9 @@ export interface PracticeAttempt {
 export type Screen = "landing" | "dashboard" | "quiz" | "study-path" | "practice" | "progress";
 
 export interface User {
+  uid: string;
   email: string;
   displayName: string;
   createdAt: number;
+  provider: "firebase" | "local";
 }
